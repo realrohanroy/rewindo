@@ -18,32 +18,22 @@ Then open http://localhost:5173.
 | Layer | Choice | Why |
 |---|---|---|
 | App | Vite + React + TypeScript | Loads in about a second on a phone, shareable by link, no install. |
-| Cinematics | CSS animation over layered stills | The episode is scenes, faces and text. A 3D engine adds load time and nothing else. |
+| 3D scenes | Three.js | First-person view across the table from your advisors, in a room built for each decision. Runs in the browser, so the game is still a link, not a download. |
 | Sound | Web Audio API, synthesised | Room drone, wall clock, typewriter, stamp and a heartbeat under 7 days of cover. No audio files yet. |
 | Episode content | Typed data in `src/episode.ts` | Writers change text and numbers without touching the engine. |
 | Rules | `src/engine.ts` | Meters, the passage of time, forced events, endings, and the free-text matcher. |
+| Rooms and people | `src/world/` | `rooms.ts` builds the five locations, `people.ts` the characters, `stage.ts` the camera and lighting. |
 
-A game engine (Unity, Unreal, Godot) was considered and rejected for now: web exports are tens of megabytes, slow on mid-range Android phones, and awkward to share. If a later episode needs real 3D, a single scene can be embedded with Three.js without changing the rest.
+A full game engine (Unity, Unreal, Godot) was considered and rejected for now: web exports are tens of megabytes, slow on mid-range Android phones, and awkward to share. Three.js gives real 3D inside the same web page.
 
-## Adding real faces and locations
+## Characters and likeness
 
-The prototype draws placeholder silhouettes and lighting. Drop images at these paths and they replace the placeholders with no code change.
+The characters are stylised 3D figures built from simple shapes. Each is defined in `src/world/people.ts` by the features people recognise someone by: headwear, hairline, beard, glasses, build and dress. Dr Manmohan Singh (blue turban, white beard, glasses) is recognisable at a glance. The others are approximations and should be checked against reference photos.
 
-**Portraits** — `public/art/portraits/<id>.jpg`, portrait orientation, about 400×500:
+For true likeness there are two routes:
 
-`chandra` · `singh` · `fm-politician` · `venkitaramanan` · `verma` · `veteran`
-
-**Scene plates** — `public/art/scenes/<env>.jpg`, landscape, about 2400×1350, dark enough for text to sit on:
-
-| File | Scene |
-|---|---|
-| `study.jpg` | The PM's study at night, one desk lamp |
-| `vault.jpg` | Reserve Bank vault or strongroom |
-| `office.jpg` | South Block office, afternoon, blinds and ceiling fan |
-| `night.jpg` | 7 Race Course Road after midnight |
-| `hall.jpg` | Congress Parliamentary Party meeting |
-
-Plates are automatically darkened and given a slow camera drift.
+- **Sculpted or scanned heads (not built).** Commission a 3D head per character as a `.glb` file and load it in place of the primitive head.
+- **Portrait photos beside the dialogue (slot ready).** Drop `public/art/portraits/<id>.jpg` (about 400×500) and it appears next to that advisor's words. Ids: `chandra`, `singh`, `fm-politician`, `venkitaramanan`, `verma`, `veteran`.
 
 ## Not built yet
 

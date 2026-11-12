@@ -75,7 +75,7 @@ p {
   }
 }
 
-/* ---------- environments (placeholders until real plates are dropped into /public/art/scenes) ---------- */
+/* ---------- the 3D room, with film grain, a text scrim and a vignette over it ---------- */
 
 .env {
   position: fixed;
@@ -88,155 +88,24 @@ p {
   position: absolute;
   inset: 0;
 }
-.wash {
-  animation:
-    fade 1.6s ease both,
-    drift 40s ease-in-out infinite alternate;
-}
-.plate {
+.env canvas {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  filter: sepia(0.35) contrast(1.05) brightness(0.5);
-  animation:
-    fade 1.6s ease both,
-    drift 40s ease-in-out infinite alternate;
+  transition: opacity 1.4s ease;
 }
-@keyframes drift {
-  from {
-    transform: scale(1.04) translate(0, 0);
-  }
-  to {
-    transform: scale(1.14) translate(-1.5%, -1%);
-  }
+.env.dim canvas {
+  opacity: 0.28;
 }
-
-/* Study: one desk lamp in a dark room. */
-.env-study .wash {
-  background:
-    radial-gradient(ellipse 46% 40% at 22% 82%, rgba(226, 164, 68, 0.42), transparent 70%),
-    radial-gradient(ellipse 30% 55% at 20% 100%, rgba(255, 220, 150, 0.2), transparent 70%),
-    linear-gradient(160deg, #11150f 0%, #080a08 60%, #050605 100%);
+.scrim {
+  background: linear-gradient(180deg, transparent 40%, rgba(4, 5, 4, 0.8) 70%, rgba(4, 5, 4, 0.96));
+  transition: opacity 1s ease;
 }
-.env-study .prop {
-  background:
-    linear-gradient(90deg, transparent 62%, rgba(0, 0, 0, 0.5) 62% 63%, transparent 63%),
-    repeating-linear-gradient(90deg, rgba(235, 225, 200, 0.035) 0 14px, transparent 14px 38px);
-  mask-image: linear-gradient(180deg, transparent 8%, #000 30%, transparent 62%);
-  animation: lamp 7s ease-in-out infinite;
+.env.dim .scrim {
+  opacity: 0;
 }
-@keyframes lamp {
-  0%,
-  100% {
-    opacity: 0.9;
-  }
-  47% {
-    opacity: 0.75;
-  }
-  50% {
-    opacity: 0.95;
-  }
-}
-
-/* Vault: cold steel, and gold somewhere below. */
-.env-vault .wash {
-  background:
-    radial-gradient(ellipse 70% 38% at 50% 112%, rgba(214, 172, 72, 0.4), transparent 70%),
-    linear-gradient(180deg, #0c141b 0%, #070b10 55%, #050607 100%);
-}
-.env-vault .prop {
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(170, 200, 220, 0.09) 0 3px,
-    rgba(0, 0, 0, 0.35) 3px 7px,
-    transparent 7px 96px
-  );
-  mask-image: linear-gradient(180deg, #000 0%, #000 70%, transparent 100%);
-}
-
-/* Office: afternoon light through blinds, and a ceiling fan turning. */
-.env-office .wash {
-  background:
-    radial-gradient(ellipse 60% 70% at 85% 20%, rgba(255, 206, 140, 0.26), transparent 70%),
-    linear-gradient(130deg, #2a2216 0%, #14100a 55%, #080705 100%);
-}
-.env-office .prop {
-  background: repeating-linear-gradient(
-    104deg,
-    rgba(255, 214, 150, 0.13) 0 22px,
-    transparent 22px 58px
-  );
-  mask-image: radial-gradient(ellipse 75% 80% at 80% 30%, #000 10%, transparent 75%);
-}
-.env-office .fan {
-  inset: auto;
-  left: 50%;
-  top: 50%;
-  width: 150vmax;
-  height: 150vmax;
-  margin: -75vmax 0 0 -75vmax;
-  /* Soft-edged blades drawn in the gradient itself: a blur filter on a layer this size stalls the page. */
-  background: conic-gradient(
-    transparent 0deg,
-    rgba(0, 0, 0, 0.55) 14deg,
-    transparent 30deg,
-    transparent 120deg,
-    rgba(0, 0, 0, 0.55) 134deg,
-    transparent 150deg,
-    transparent 240deg,
-    rgba(0, 0, 0, 0.55) 254deg,
-    transparent 270deg
-  );
-  opacity: 0.6;
-  will-change: transform;
-  animation: spin 2.6s linear infinite;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Night: a residence after midnight, one window lit. */
-.env-night .wash {
-  background:
-    radial-gradient(ellipse 22% 34% at 82% 34%, rgba(150, 180, 220, 0.2), transparent 70%),
-    linear-gradient(200deg, #0b1020 0%, #070910 55%, #040506 100%);
-}
-.env-night .prop {
-  background:
-    linear-gradient(90deg, transparent 49.6%, rgba(0, 0, 0, 0.6) 49.6% 50.4%, transparent 50.4%),
-    linear-gradient(180deg, transparent 49.4%, rgba(0, 0, 0, 0.6) 49.4% 50.6%, transparent 50.6%),
-    rgba(150, 180, 220, 0.1);
-  inset: 18% 10% auto auto;
-  width: min(22vw, 240px);
-  height: min(34vh, 320px);
-  box-shadow: 0 0 120px rgba(150, 180, 220, 0.18);
-}
-
-/* Hall: a crowded party meeting, heads in rows, smoke overhead. */
-.env-hall .wash {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(210, 90, 60, 0.3), transparent 70%),
-    linear-gradient(180deg, #24100c 0%, #120806 60%, #060403 100%);
-}
-.env-hall .prop {
-  background:
-    radial-gradient(circle at 50% 100%, rgba(0, 0, 0, 0.9) 0 26px, transparent 27px) 0 100% / 78px 70px repeat-x,
-    radial-gradient(circle at 50% 100%, rgba(0, 0, 0, 0.6) 0 22px, transparent 23px) 39px calc(100% - 46px) / 78px
-      60px repeat-x,
-    radial-gradient(circle at 50% 100%, rgba(0, 0, 0, 0.4) 0 18px, transparent 19px) 12px calc(100% - 86px) / 66px
-      50px repeat-x;
-}
-
-.haze {
-  background: radial-gradient(ellipse 60% 30% at 30% 40%, rgba(235, 225, 200, 0.05), transparent 70%);
-  animation: haze 26s ease-in-out infinite alternate;
-}
-@keyframes haze {
-  to {
-    transform: translate(18%, -6%) scale(1.3);
-  }
+.phase-decide .scrim {
+  background: linear-gradient(180deg, rgba(4, 5, 4, 0.2) 0%, rgba(4, 5, 4, 0.82) 45%, rgba(4, 5, 4, 0.96));
 }
 .grain {
   inset: -50%;
@@ -266,8 +135,25 @@ p {
 }
 .vignette {
   background:
-    radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.78) 100%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 22%, transparent 70%, rgba(0, 0, 0, 0.6));
+    radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.7) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.5), transparent 20%);
+}
+/* Under a week of import cover, the edges of the frame start to throb. */
+.tense .vignette {
+  animation: throb 1s ease-in-out infinite;
+}
+@keyframes throb {
+  50% {
+    box-shadow: inset 0 0 160px rgba(210, 64, 47, 0.38);
+  }
+}
+
+/* In a scene, text sits low like a subtitle so the room and the people stay in view. */
+.phase-beats .content > *,
+.phase-counsel .content > *,
+.phase-decide .content > *,
+.phase-outcome .content > * {
+  margin: auto auto 0;
 }
 
 /* ---------- HUD ---------- */
@@ -443,10 +329,6 @@ p {
 /* ---------- advisors ---------- */
 
 .counsel {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 18px;
-  align-items: start;
   padding: 16px 18px;
   background: rgba(8, 10, 9, 0.72);
   border: 1px solid var(--faint);
@@ -467,27 +349,12 @@ p {
   overflow: hidden;
   filter: sepia(0.4);
 }
-.portrait img,
-.portrait svg {
+.portrait img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-.portrait svg {
-  fill: rgba(0, 0, 0, 0.55);
-}
-.portrait span {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 4px;
-  text-align: center;
-  font-family: var(--type);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  color: var(--paper);
 }
 
 /* ---------- title ---------- */
@@ -569,13 +436,6 @@ p {
 
 /* ---------- scene card ---------- */
 
-.phase-card .env > .wash,
-.phase-card .env > .prop,
-.phase-card .env > .fan,
-.phase-card .env > .plate {
-  opacity: 0.25;
-  transition: opacity 1s;
-}
 .card {
   text-align: center;
   cursor: pointer;
@@ -932,10 +792,6 @@ p {
     order: 3;
     flex-basis: 100%;
   }
-  .counsel {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
   .portrait {
     width: 56px;
     height: 70px;
@@ -951,5 +807,22 @@ p {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+/* ---------- layout over the 3D room ---------- */
+
+.counsel:has(.portrait) {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.content > .decide {
+  max-width: 980px;
+}
+@media (min-width: 860px) {
+  .options {
+    grid-template-columns: 1fr 1fr;
   }
 }

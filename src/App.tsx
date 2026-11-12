@@ -16,6 +16,11 @@ import {
   type Meters,
   type Option,
 } from './episode';
+import type { Focus } from './world/stage';
+import { World } from './world/World';
+
+/** Named speakers in narration beats who are also seated in the room. */
+const SPEAKER_ID: Record<string, string> = { Chandra: 'chandra' };
 
 /* ---------- art slots: drop real images in /public/art and they replace the placeholders ---------- */
 
@@ -33,43 +38,13 @@ function useArt(src: string) {
   return ok ? src : null;
 }
 
-function Portrait({ id, name }: { id: string; name: string }) {
+/** A photo beside the advisor's words, shown only once a real portrait has been supplied. */
+function Portrait({ id }: { id: string }) {
   const art = useArt(`/art/portraits/${id}.jpg`);
-  const initials = name
-    .replace(/^(Dr|The)\s+/i, '')
-    .split(/[\s.]+/)
-    .filter(Boolean)
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('');
+  if (!art) return null;
   return (
     <div className="portrait" aria-hidden="true">
-      {art ? (
-        <img src={art} alt="" />
-      ) : (
-        <>
-          <svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMax slice">
-            <circle cx="50" cy="44" r="22" />
-            <path d="M8 120c0-30 18-46 42-46s42 16 42 46z" />
-          </svg>
-          <span>{initials}</span>
-        </>
-      )}
-    </div>
-  );
-}
-
-function Backdrop({ env }: { env: Env }) {
-  const art = useArt(`/art/scenes/${env}.jpg`);
-  return (
-    <div className={`env env-${env}`} aria-hidden="true">
-      <div className="wash" key={env} />
-      {art && <img className="plate" key={art} src={art} alt="" />}
-      {!art && <div className="prop" key={`${env}-prop`} />}
-      {!art && env === 'office' && <div className="fan" />}
-      <div className="haze" />
-      <div className="grain" />
-      <div className="vignette" />
+      <img src={art} alt="" />
     </div>
   );
 }
@@ -105,8 +80,17 @@ function Typed({ text, skip, onDone }: { text: string; skip: boolean; onDone: ()
 
 type Item = Beat & { advisor?: Advisor };
 
+type RevealProps = {
+  items: Item[];
+  endLabel: string;
+  onEnd: () => void;
+  /** Show only the current item, like a subtitle, so the room stays visible. */
+  single?: boolean;
+  onItem?: (item: Item) => void;
+};
+
 /** Reveals items one at a time. Click, Space or Enter skips the typing, then advances. */
-function Reveal({ items, endLabel, onEnd }: { items: Item[]; endLabel: string; onEnd: () => void }) {
+function Reveal({ items, endLabel, onEnd, single, onItem }: RevealProps) {
   const [i, setI] = useState(0);
   const [done, setDone] = useState(false);
   const [skip, setSkip] = useState(false);
@@ -137,14 +121,18 @@ function Reveal({ items, endLabel, onEnd }: { items: Item[]; endLabel: string; o
 
   const onDone = useCallback(() => setDone(true), []);
 
+  const current = items[i];
+  useEffect(() => onItem?.(current), [current, onItem]);
+
   return (
     <div className="reveal" onClick={advance}>
-      {items.slice(0, i + 1).map((it, k) => {
+      {items.map((it, k) => {
+        if (k > i || (single && k < i)) return null;
         const body = k < i ? it.text : <Typed text={it.text} skip={skip} onDone={onDone} />;
         if (it.advisor)
           return (
             <div className="counsel" key={k}>
-              <Portrait id={it.advisor.id} name={it.advisor.name} />
+              <Portrait id={it.advisor.id} />
               <div>
                 <div className="who">
                   {it.advisor.name} <em>{it.advisor.role}</em>
@@ -438,12 +426,22 @@ function History({ g, onReplay }: { g: Game; onReplay: () => void }) {
 export default function App() {
   const [g, setG] = useState<Game>(newGame);
   const [muted, setMuted] = useState(false);
+  const [speaker, setSpeaker] = useState<string | null>(null);
   const scene = g.idx >= 0 ? SCENES[g.idx] : null;
 
   useEffect(() => sound.setCover(g.meters.cover), [g.meters.cover]);
 
+  const inScene = ['card', 'beats', 'counsel', 'decide', 'outcome'].includes(g.phase);
   const env: Env =
     g.phase === 'ending' ? ENDINGS[g.ending!].env : g.phase === 'history' ? 'study' : (scene?.env ?? 'study');
+  const cast = inScene && scene ? scene.advisors(g.flags).map((a) => a.id) : [];
+  const focus: Focus = g.phase === 'decide' ? 'file' : inScene && g.phase !== 'card' ? 'room' : 'wide';
+  const talking = g.phase === 'beats' || g.phase === 'counsel' ? speaker : null;
+
+  const onItem = useCallback(
+    (it: Beat & { advisor?: Advisor }) => setSpeaker(it.advisor?.id ?? (it.who ? (SPEAKER_ID[it.who] ?? null) : null)),
+    [],
+  );
 
   const begin = () => {
     sound.start();
@@ -461,8 +459,8 @@ export default function App() {
   const key = `${g.phase}-${g.idx}`;
 
   return (
-    <div className={`stage phase-${g.phase}`}>
-      <Backdrop env={env} />
+    <div className={`stage phase-${g.phase} ${g.meters.cover <= 7 && inScene ? 'tense' : ''}`}>
+      <World env={env} cast={cast} speaker={talking} focus={focus} dim={!inScene || g.phase === 'card'} />
       {showHud && <Hud m={g.meters} muted={muted} onMute={() => setMuted(sound.toggle())} />}
 
       <main className="content" key={key}>
@@ -488,14 +486,16 @@ export default function App() {
         {g.phase === 'card' && <SceneCard g={g} onGo={toBeats} />}
 
         {g.phase === 'beats' && scene && (
-          <Reveal items={scene.beats(g.flags)} endLabel="Hear your advisors" onEnd={toCounsel} />
+          <Reveal single items={scene.beats(g.flags)} endLabel="Hear your advisors" onEnd={toCounsel} onItem={onItem} />
         )}
 
         {g.phase === 'counsel' && scene && (
           <Reveal
+            single
             items={scene.advisors(g.flags).map((a) => ({ text: a.text, advisor: a }))}
             endLabel="Decide"
             onEnd={toDecide}
+            onItem={onItem}
           />
         )}
 
@@ -505,6 +505,7 @@ export default function App() {
           <div className="outcome">
             <div className="file-head">{g.picked[scene!.id]?.label}</div>
             <Reveal
+              single
               items={g.outcome.text.split('\n\n').map((text) => ({ text }))}
               endLabel="Continue"
               onEnd={toNext}
