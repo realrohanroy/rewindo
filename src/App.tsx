@@ -161,7 +161,41 @@ function Deltas({ deltas }: { deltas: Delta[] }) {
   );
 }
 
-function Hud({ g, muted, onMute }: { g: Game; muted: boolean; onMute: () => void }) {
+/** Asks before leaving, since an episode can't be resumed. Holds the keyboard while open so Space doesn't advance the story underneath. */
+function ExitConfirm({ title, onLeave, onStay }: { title: string; onLeave: () => void; onStay: () => void }) {
+  const stay = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    stay.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      // No key reaches the game while this is open. Tab, and Enter/Space on a focused button, keep their default action.
+      e.stopImmediatePropagation();
+      if (e.code === 'Escape') return onStay();
+      const pressesButton = e.target instanceof HTMLButtonElement && (e.code === 'Enter' || e.code === 'Space');
+      if (e.code !== 'Tab' && !pressesButton) e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [onStay]);
+  return (
+    <div className="exit-backdrop" onClick={onStay}>
+      <div className="exit-dialog" role="dialog" aria-modal="true" aria-labelledby="exit-title" onClick={(e) => e.stopPropagation()}>
+        <div className="file-head">Leave the episode</div>
+        <h3 id="exit-title">Walk away from {title}?</h3>
+        <p>Your choices so far will be lost. You can start any episode again from the beginning.</p>
+        <div className="actions">
+          <button className="primary" onClick={onLeave}>
+            Leave
+          </button>
+          <button className="ghost" ref={stay} onClick={onStay}>
+            Stay
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Hud({ g, muted, onMute, onExit }: { g: Game; muted: boolean; onMute: () => void; onExit: () => void }) {
   const hero = g.ep.hero(g.meters, g.flags);
   return (
     <header className={`hud ${hero.danger ? 'danger' : ''}`}>
@@ -182,9 +216,14 @@ function Hud({ g, muted, onMute }: { g: Game; muted: boolean; onMute: () => void
           </div>
         ))}
       </div>
-      <button className="mute" onClick={onMute} aria-label={muted ? 'Turn sound on' : 'Turn sound off'}>
-        {muted ? 'Sound off' : 'Sound on'}
-      </button>
+      <div className="hud-buttons">
+        <button className="mute" onClick={onMute} aria-label={muted ? 'Turn sound on' : 'Turn sound off'}>
+          {muted ? 'Sound off' : 'Sound on'}
+        </button>
+        <button className="mute exit" onClick={onExit} title="Leave this episode (Esc)">
+          Exit
+        </button>
+      </div>
     </header>
   );
 }
@@ -438,7 +477,26 @@ export default function App() {
   const [g, setG] = useState<Game>(() => newGame(EPISODES[0]));
   const [muted, setMuted] = useState(false);
   const [speaker, setSpeaker] = useState<string | null>(null);
+  const [exiting, setExiting] = useState(false);
   const { ep } = g;
+  const playing = g.phase !== 'title' && g.phase !== 'history';
+
+  const askExit = useCallback(() => setExiting(true), []);
+  const stay = useCallback(() => setExiting(false), []);
+  const leave = useCallback(() => {
+    setExiting(false);
+    setSpeaker(null);
+    setG((cur) => newGame(cur.ep));
+  }, []);
+
+  useEffect(() => {
+    if (!playing || exiting) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === 'Escape') setExiting(true);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [playing, exiting]);
   const scene = g.idx >= 0 ? ep.scenes[g.idx] : null;
 
   const inScene = ['card', 'beats', 'counsel', 'decide', 'outcome'].includes(g.phase);
@@ -481,7 +539,13 @@ export default function App() {
   return (
     <div className={`stage phase-${g.phase} ${pressure >= 0.5 && inScene ? 'tense' : ''}`}>
       <World env={env} cast={cast} speaker={talking} focus={focus} dim={!inScene || g.phase === 'card'} />
-      {showHud && <Hud g={g} muted={muted} onMute={() => setMuted(sound.toggle())} />}
+      {showHud && <Hud g={g} muted={muted} onMute={() => setMuted(sound.toggle())} onExit={askExit} />}
+      {g.phase === 'briefing' && (
+        <button className="mute exit corner-exit" onClick={askExit} title="Leave this episode (Esc)">
+          Exit
+        </button>
+      )}
+      {exiting && <ExitConfirm title={ep.title} onLeave={leave} onStay={stay} />}
 
       <main className="content" key={key}>
         {g.phase === 'title' && <Title onBegin={begin} />}

@@ -880,3 +880,65 @@ p {
   grid-template-columns: 1fr;
   max-width: 460px;
 }
+
+/* ---------- leaving an episode ---------- */
+
+.hud-buttons {
+  display: flex;
+  gap: 8px;
+}
+.mute.exit:hover,
+.mute.exit:focus-visible {
+  color: var(--paper);
+  border-color: var(--red);
+  outline: none;
+}
+.corner-exit {
+  position: fixed;
+  top: 14px;
+  right: clamp(14px, 3vw, 32px);
+  z-index: 3;
+  font-family: var(--type);
+  background: rgba(0, 0, 0, 0.5);
+}
+.exit-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(3px);
+  animation: fade 0.25s ease both;
+}
+.exit-dialog {
+  width: 100%;
+  max-width: 460px;
+  padding: 26px 26px 22px;
+  background: #0d0e0c;
+  border: 1px solid var(--faint);
+  border-top: 3px solid var(--red);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  animation: rise 0.3s ease both;
+}
+.exit-dialog .file-head {
+  color: var(--red);
+}
+.exit-dialog h3 {
+  margin: 10px 0 10px;
+  font-size: 1.9rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.exit-dialog p {
+  margin-bottom: 22px;
+  font-size: 1.15rem;
+  line-height: 1.4;
+  color: var(--dim);
+}
+@media (max-width: 640px) {
+  .hud-buttons {
+    order: 2;
+  }
+}
