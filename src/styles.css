@@ -957,3 +957,20 @@ p {
     transform: scaleX(0);
   }
 }
+
+/* ---------- title screen: the montage plays brighter than a dimmed room, under a soft scrim ---------- */
+
+.env.reel canvas {
+  opacity: 0.78;
+}
+.env.reel .scrim {
+  background: radial-gradient(ellipse 70% 62% at 50% 50%, rgba(4, 5, 4, 0.72), rgba(4, 5, 4, 0.2) 75%);
+}
+.title .brand,
+.pitch,
+.title .fine {
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.95), 0 0 4px rgba(0, 0, 0, 0.8);
+}
+.episode {
+  background: rgba(8, 10, 9, 0.82);
+}

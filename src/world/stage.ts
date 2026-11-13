@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Env } from '../episodes/types';
 import { buildPerson, type Person } from './people';
+import { REEL } from './reel';
 import { buildRoom, type Room } from './rooms';
 
 /** Where the player is looking: across the table, down at the file, or a pulled-back establishing view. */
@@ -33,6 +34,9 @@ export class Stage {
   private raf = 0;
   private observer: ResizeObserver;
   private still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /** Title-screen montage: which shot is playing and for how long. -1 when the montage is off. */
+  private shot = -1;
+  private shotTime = 0;
 
   constructor(private canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -70,6 +74,46 @@ export class Stage {
     this.speaker = id;
   }
 
+  /** Start the title-screen montage. It loops until `stopReel`. */
+  playReel() {
+    if (this.shot >= 0) return;
+    this.cut(0);
+  }
+
+  stopReel() {
+    if (this.shot < 0) return;
+    this.shot = -1;
+    this.speaker = null;
+    this.key = ''; // force the next `set` to rebuild, whatever the montage left on screen
+  }
+
+  private cut(index: number) {
+    this.shot = index % REEL.length;
+    this.shotTime = 0;
+    const s = REEL[this.shot];
+    this.set(s.env, s.cast);
+    this.camera.position.set(...s.from.pos);
+    this.look.set(...s.from.look);
+  }
+
+  /** Advance the montage. Returns the brightness for this frame: each shot fades in and out around its cut. */
+  private reel(dt: number): number {
+    const s = REEL[this.shot];
+    this.shotTime += dt;
+    if (this.shotTime >= s.seconds) {
+      this.cut(this.shot + 1);
+      return 0;
+    }
+    // Ease in and out, so each move settles before the cut.
+    const k = this.still ? 1 : THREE.MathUtils.smootherstep(this.shotTime / s.seconds, 0, 1);
+    this.camera.position.set(...s.from.pos).lerp(new THREE.Vector3(...s.to.pos), k);
+    this.look.set(...s.from.look).lerp(new THREE.Vector3(...s.to.look), k);
+    this.camera.lookAt(this.look);
+    // Somebody in the room is always talking.
+    if (this.people.length) this.speaker = this.people[Math.floor(this.shotTime / 1.8) % this.people.length].id;
+    return Math.min(1, this.shotTime / 0.7, (s.seconds - this.shotTime) / 0.5);
+  }
+
   setFocus(focus: Focus) {
     this.focus = focus;
   }
@@ -103,9 +147,10 @@ export class Stage {
     const t = this.clock.elapsedTime;
     const ease = 1 - Math.exp(-dt * 2.2);
 
+    const reelLight = this.shot >= 0 ? this.reel(dt) : null;
     this.room?.tick(t);
     this.fade = Math.min(1, this.fade + dt / 1.4);
-    this.renderer.toneMappingExposure = this.fade * this.fade;
+    this.renderer.toneMappingExposure = reelLight ?? this.fade * this.fade;
 
     const speaking = this.people.find((p) => p.id === this.speaker);
     for (const p of this.people) {
@@ -123,6 +168,11 @@ export class Stage {
     const lift = this.room?.standing ? 0.42 : 0;
     if (speaking) this.spot.target.position.set(speaking.x, 1.2 + lift, SEAT_Z);
     this.spot.intensity += ((speaking ? 26 : 0) - this.spot.intensity) * ease;
+
+    if (reelLight !== null) {
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
 
     const view = VIEW[this.focus];
     const target = view.look.clone();

@@ -519,7 +519,9 @@ export default function App() {
   const pressure = g.phase === 'title' ? 0 : ep.pressure(g.meters, g.flags);
   useEffect(() => sound.setPressure(pressure), [pressure]);
 
-  const env: Env = g.phase === 'ending' ? ep.endings[g.ending!].env : g.phase === 'history' ? 'study' : (scene?.env ?? 'study');
+  // The briefing plays in the episode's opening location, and the record in the room where it ended.
+  const env: Env =
+    (g.phase === 'ending' || g.phase === 'history') && g.ending ? ep.endings[g.ending].env : (scene?.env ?? ep.scenes[0].env);
   const cast = inScene && scene ? scene.advisors(g.flags, g.meters).map((a) => a.id) : [];
   const focus: Focus = g.phase === 'decide' ? 'file' : inScene && g.phase !== 'card' ? 'room' : 'wide';
   const talking = g.phase === 'beats' || g.phase === 'counsel' ? speaker : null;
@@ -554,7 +556,7 @@ export default function App() {
 
   return (
     <div className={`stage phase-${g.phase} ${pressure >= 0.5 && inScene ? 'tense' : ''}`}>
-      <World env={env} cast={cast} speaker={talking} focus={focus} dim={!inScene || g.phase === 'card'} />
+      <World env={env} cast={cast} speaker={talking} focus={focus} dim={!inScene || g.phase === 'card'} reel={g.phase === 'title'} />
       {showHud && <Hud g={g} muted={muted} onMute={() => setMuted(sound.toggle())} onExit={askExit} />}
       {g.phase === 'briefing' && (
         <button className="mute exit corner-exit" onClick={askExit} title="Leave this episode (Esc)">
