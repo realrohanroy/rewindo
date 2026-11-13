@@ -1,54 +1,9 @@
 // Episode 01 — Two Weeks of Dollars.
 // Content source: episodes/1991-two-weeks-of-dollars.md. All dialogue is dramatised.
 
-export type Meters = { cover: number; lender: number; capital: number; mood: number };
+import type { Advisor, Beat, Episode, Flags, Meters, Scene } from './types';
 
-export type Flags = {
-  fm?: 'technocrat' | 'politician' | 'self';
-  gold?: 'pledged' | 'refused';
-  plan2?: boolean;
-  devalued?: 'two_step' | 'one_shot' | 'none' | 'half';
-  licence?: 'abolished' | 'partial' | 'deferred';
-  budget?: 'bold' | 'cautious';
-  fertiliser?: 'held' | 'partial' | 'rolled_back';
-};
-
-export type Env = 'study' | 'vault' | 'office' | 'night' | 'hall';
-export type Beat = { who?: string; text: string };
-export type Advisor = { id: string; name: string; role: string; text: string };
-export type Option = {
-  id: string;
-  label: string;
-  short: string;
-  fx: Partial<Meters>;
-  set?: Partial<Flags>;
-  outcome: string;
-};
-export type Scene = {
-  id: string;
-  num: string;
-  title: string;
-  date: string;
-  place: string;
-  env: Env;
-  days: number;
-  skip?: (f: Flags) => boolean;
-  beats: (f: Flags) => Beat[];
-  advisors: (f: Flags) => Advisor[];
-  prompt: string;
-  options: (f: Flags) => Option[];
-};
-
-export const START: Meters = { cover: 14, lender: 20, capital: 50, mood: 50 };
-
-export const METER_LABEL: Record<keyof Meters, string> = {
-  cover: 'Import cover',
-  lender: 'Lender confidence',
-  capital: 'Political capital',
-  mood: 'Public mood',
-};
-
-export const BRIEFING: Beat[] = [
+const BRIEFING: Beat[] = [
   { text: 'New Delhi, 20 June 1991.' },
   {
     text: 'A month ago you were packing your books to retire to Hyderabad. Then Rajiv Gandhi was assassinated in the middle of the election.',
@@ -93,7 +48,7 @@ const fm = (f: Flags, technocrat: string, politician: string): Advisor | null =>
 };
 const list = (...a: (Advisor | null)[]) => a.filter((x): x is Advisor => x !== null);
 
-export const SCENES: Scene[] = [
+const SCENES: Scene[] = [
   {
     id: 's1',
     num: 'I',
@@ -521,108 +476,241 @@ export const SCENES: Scene[] = [
   },
 ];
 
-export type EndingId = 'default' | 'fall' | 'holding' | 'opening';
 
-export const ENDINGS: Record<EndingId, { title: string; env: Env; text: string[] }> = {
-  default: {
-    title: 'Default',
-    env: 'vault',
-    text: [
-      'An Indian Oil tanker waits off Bombay while a bank in London declines to confirm the letter of credit. By evening the news is everywhere.',
-      'India has missed a payment for the first time in its history.',
-      'The IMF returns, with a longer list and less patience. The reforms you avoided arrive anyway, written by someone else.',
-    ],
-  },
-  fall: {
-    title: 'The Fall',
-    env: 'hall',
-    text: [
-      'The letter has ninety signatures. You read it twice, though you knew its contents from the first line.',
-      'The party that chose you because it could not agree on anyone else has now agreed on something.',
-      'Your successor inherits a half-finished rescue and a lesson about how fast to move.',
-    ],
-  },
-  holding: {
-    title: 'The Holding Action',
-    env: 'office',
-    text: [
-      'The crisis passes. The gold comes home. By winter the reserves are no longer front-page news.',
-      'The permits, the quotas and the queues remain.',
-      'You were asked to prevent a default, and you did. Whether the moment offered more than that is a question others will ask.',
-    ],
-  },
-  opening: {
-    title: 'The Opening',
-    env: 'office',
-    text: [
-      'By autumn the reserves are climbing. Within months the pledged gold is redeemed.',
-      'The factory that once needed a licence to add a production line now needs only a customer.',
-      'You never called it a revolution. You called it continuity, and let the country find out for itself.',
-    ],
-  },
-};
-
-export const FERTILISER_LINE: Record<NonNullable<Flags['fertiliser']>, string> = {
+const FERTILISER_LINE: Record<string, string> = {
   held: 'You did not bend, and the party never quite forgave you.',
   partial: 'You gave a little so that you could keep the rest.',
   rolled_back: 'The Budget’s boldest line did not survive August.',
 };
+const withFertiliser = (lines: string[]) => (f: Flags) =>
+  typeof f.fertiliser === 'string' ? [...lines, FERTILISER_LINE[f.fertiliser]] : lines;
 
-export type HistoryRow = {
-  decision: string;
-  scenes: string[];
-  rao: string;
-  raoShort: string;
-  match: (f: Flags, picked: Record<string, Option>) => boolean;
+const add = (m: Meters, fx: Meters): Meters => ({
+  ...m,
+  cover: Math.max(0, m.cover + (fx.cover ?? 0)),
+  capital: Math.max(0, Math.min(100, m.capital + (fx.capital ?? 0))),
+  mood: Math.max(0, Math.min(100, m.mood + (fx.mood ?? 0))),
+});
+
+export const E1991: Episode = {
+  id: '1991',
+  num: '01',
+  year: '1991',
+  title: 'Two Weeks of Dollars',
+  you: 'P.V. Narasimha Rao',
+  short: 'Rao',
+  hook: 'The country has fourteen days of foreign exchange left.',
+  begin: 'Take the oath',
+  duration: 'About 15 minutes',
+  shareLine: 'I was Narasimha Rao for six weeks.',
+  decideHead: 'For orders of the Prime Minister',
+  speakers: { Chandra: 'chandra' },
+
+  briefing: BRIEFING,
+  meters: [
+    { key: 'cover', start: 14, max: 999 },
+    { key: 'lender', start: 20 },
+    { key: 'capital', start: 50 },
+    { key: 'mood', start: 50 },
+  ],
+  hero: (m) => ({
+    key: 'cover',
+    label: 'Import cover',
+    value: m.cover,
+    unit: m.cover === 1 ? 'day' : 'days',
+    danger: m.cover <= 7,
+  }),
+  gauges: (m) => [
+    { key: 'lender', label: 'Lender confidence', value: m.lender, low: m.lender < 25 },
+    { key: 'capital', label: 'Political capital', value: m.capital, low: m.capital < 25 },
+    { key: 'mood', label: 'Public mood', value: m.mood, low: m.mood < 25 },
+  ],
+  pressure: (m) => 1 - Math.min(14, m.cover) / 14,
+
+  scenes: SCENES,
+
+  // Every scene costs days of imports. Lost confidence and a second portfolio cost more.
+  onEnter: (scene, m0, f0) => {
+    let m = m0;
+    let f = f0;
+    const notes: string[] = [];
+    if (!scene.days) return { meters: m, flags: f, notes };
+
+    let days = scene.days;
+    notes.push(`${scene.days} days of imports paid for.`);
+    if (f.fm === 'self') {
+      days += 1;
+      notes.push('You hold two portfolios. Decisions wait on your desk: 1 more day lost.');
+    }
+    if (m.lender < 15) {
+      days += 2;
+      notes.push('Lenders have lost faith. Deposits are fleeing abroad: 2 more days lost.');
+    }
+    m = add(m, { cover: -days });
+    if (m.mood < 25) {
+      m = add(m, { capital: -5 });
+      notes.push('Anger in the streets is reaching your own MPs.');
+    }
+    if (f.gold === 'refused' && m.cover < 7) {
+      m = add(m, { cover: 6, mood: -15, capital: -5 });
+      f = { ...f, gold: 'pledged' };
+      notes.push(
+        'With under a week of imports left, the Governor returns. This time there is no decision to make. The gold goes to London.',
+      );
+    }
+    return { meters: m, flags: f, notes };
+  },
+
+  lost: (m) => (m.cover <= 0 ? 'default' : m.capital <= 0 ? 'fall' : undefined),
+  final: (_m, f) => {
+    const reforms = [
+      f.licence === 'abolished',
+      f.budget === 'bold',
+      f.devalued === 'two_step' || f.devalued === 'one_shot',
+    ].filter(Boolean).length;
+    return reforms >= 2 ? 'opening' : 'holding';
+  },
+
+  endings: {
+    default: {
+      title: 'Default',
+      env: 'vault',
+      text: () => [
+        'An Indian Oil tanker waits off Bombay while a bank in London declines to confirm the letter of credit. By evening the news is everywhere.',
+        'India has missed a payment for the first time in its history.',
+        'The IMF returns, with a longer list and less patience. The reforms you avoided arrive anyway, written by someone else.',
+      ],
+    },
+    fall: {
+      title: 'The Fall',
+      env: 'hall',
+      text: () => [
+        'The letter has ninety signatures. You read it twice, though you knew its contents from the first line.',
+        'The party that chose you because it could not agree on anyone else has now agreed on something.',
+        'Your successor inherits a half-finished rescue and a lesson about how fast to move.',
+      ],
+    },
+    holding: {
+      title: 'The Holding Action',
+      env: 'office',
+      text: withFertiliser([
+        'The crisis passes. The gold comes home. By winter the reserves are no longer front-page news.',
+        'The permits, the quotas and the queues remain.',
+        'You were asked to prevent a default, and you did. Whether the moment offered more than that is a question others will ask.',
+      ]),
+    },
+    opening: {
+      title: 'The Opening',
+      env: 'office',
+      text: withFertiliser([
+        'By autumn the reserves are climbing. Within months the pledged gold is redeemed.',
+        'The factory that once needed a licence to add a production line now needs only a customer.',
+        'You never called it a revolution. You called it continuity, and let the country find out for itself.',
+      ]),
+    },
+  },
+
+  history: [
+    {
+      decision: 'Finance Minister',
+      scenes: ['s1'],
+      real: 'Offered it to the economist I.G. Patel, who declined, then appointed Dr Manmohan Singh.',
+      realShort: 'Rao chose an economist',
+      match: (f) => f.fm === 'technocrat',
+    },
+    {
+      decision: 'The gold',
+      scenes: ['s2'],
+      real: 'The RBI pledged about 47 tonnes with the Bank of England and the Bank of Japan, raising roughly $400 million. It was done quietly. The press broke the story and there was public outrage.',
+      realShort: 'Rao sent it quietly',
+      match: (_f, p) => p.s2?.id === 'A',
+    },
+    {
+      decision: 'The rupee',
+      scenes: ['s3b', 's3'],
+      real: 'Two steps, on 1 and 3 July, about 18–19% in total. Rao got cold feet and tried to stop the second step. The RBI’s C. Rangarajan had already carried it out.',
+      realShort: 'Rao took two steps',
+      match: (f) => f.devalued === 'two_step',
+    },
+    {
+      decision: 'The licence raj',
+      scenes: ['s4'],
+      real: 'Abolished for all but 18 industries. Tabled on the morning of Budget day by a minister of state, and framed as continuity with Nehru.',
+      realShort: 'Rao ended it quietly',
+      match: (_f, p) => p.s4?.id === 'B',
+    },
+    {
+      decision: 'The Budget',
+      scenes: ['s5'],
+      real: 'Bold: a deficit cut of about two points of GDP, a 40% fertiliser price rise and higher fuel prices.',
+      realShort: 'Rao went bold',
+      match: (f) => f.budget === 'bold',
+    },
+    {
+      decision: 'The revolt',
+      scenes: ['s6'],
+      real: 'A partial retreat: the fertiliser increase was cut to 30% and small and marginal farmers were exempted.',
+      realShort: 'Rao trimmed it',
+      match: (_f, p) => p.s6?.id === 'B',
+    },
+  ],
+  afterwards:
+    'India did not default. The pledged gold was redeemed within months. Growth, about 1% in 1991–92, recovered to over 5% the next year. Rao completed a full five-year term, the first prime minister from outside the Nehru–Gandhi family to do so.',
+  otherView:
+    'Critics then and since have argued that the reforms were shaped by IMF conditions rather than democratic debate, that they favoured industry over agriculture, and that inequality widened in the decades after. Historians also disagree on how much credit belongs to Rao, to Manmohan Singh, and to groundwork laid in the 1980s.',
+
+  free: [
+    {
+      match: /soviet|ussr|moscow|russia|gorbachev/i,
+      who: 'Naresh Chandra',
+      text: 'Sir, Moscow is asking us about rupee trade credits. They have months left, not money. A day is gone finding that out.',
+      fx: { cover: -1 },
+    },
+    {
+      match: /print|mint|pay in rupees/i,
+      who: 'S. Venkitaramanan',
+      text: 'Oil is sold in dollars, Prime Minister. We cannot print those. We have lost a day discussing it.',
+      fx: { cover: -1 },
+    },
+    {
+      match: /freeze|block|lock|seize/i,
+      who: 'S. Venkitaramanan',
+      text: 'The order is drafted by noon and leaked by two. Every deposit we did not freeze is leaving on the next wire.',
+      fx: { lender: -20 },
+    },
+    {
+      match: /moratorium|stop paying|suspend (the )?(debt|payment)|default|refuse to pay/i,
+      who: 'Naresh Chandra',
+      text: 'It was discussed, sir, and rejected by everyone who has ever had to borrow again. If that is your order, I will send the telex.',
+      fx: { cover: -999 },
+    },
+    {
+      match: /election|mandate|dissolve|resign/i,
+      who: 'The Veteran',
+      text: 'A campaign takes weeks. The importers will not wait for the counting. But you are the Prime Minister.',
+      fx: { cover: -10, capital: 5 },
+    },
+    {
+      match: /donat|appeal|citizen|people.*gold|temple/i,
+      who: 'Naresh Chandra',
+      text: 'People come forward. Bangles, coins, a wedding necklace. It is moving, sir. It is also about a day of oil.',
+      fx: { mood: 10, cover: 1 },
+    },
+    {
+      match: /privati|disinvest|sell.*(psu|public sector|compan|air india)/i,
+      who: 'A.N. Verma',
+      text: 'It is the right signal and the lenders will notice. But no buyer will wire money this quarter.',
+      fx: { lender: 5 },
+    },
+    {
+      match: /imf|world bank|washington/i,
+      who: 'Naresh Chandra',
+      text: 'The IMF is already in the room, sir. They are waiting to see what you do, which is why the options on this file exist.',
+      fx: {},
+    },
+  ],
+  fallback: {
+    who: 'Naresh Chandra',
+    text: 'I will have that examined, sir. For today, the file needs one of these orders.',
+  },
 };
-
-export const HISTORY: HistoryRow[] = [
-  {
-    decision: 'Finance Minister',
-    scenes: ['s1'],
-    rao: 'Offered it to the economist I.G. Patel, who declined, then appointed Dr Manmohan Singh.',
-    raoShort: 'Rao chose an economist',
-    match: (f) => f.fm === 'technocrat',
-  },
-  {
-    decision: 'The gold',
-    scenes: ['s2'],
-    rao: 'The RBI pledged about 47 tonnes with the Bank of England and the Bank of Japan, raising roughly $400 million. It was done quietly. The press broke the story and there was public outrage.',
-    raoShort: 'Rao sent it quietly',
-    match: (_f, p) => p.s2?.id === 'A',
-  },
-  {
-    decision: 'The rupee',
-    scenes: ['s3b', 's3'],
-    rao: 'Two steps, on 1 and 3 July, about 18–19% in total. Rao got cold feet and tried to stop the second step. The RBI’s C. Rangarajan had already carried it out.',
-    raoShort: 'Rao took two steps',
-    match: (f) => f.devalued === 'two_step',
-  },
-  {
-    decision: 'The licence raj',
-    scenes: ['s4'],
-    rao: 'Abolished for all but 18 industries. Tabled on the morning of Budget day by a minister of state, and framed as continuity with Nehru.',
-    raoShort: 'Rao ended it quietly',
-    match: (_f, p) => p.s4?.id === 'B',
-  },
-  {
-    decision: 'The Budget',
-    scenes: ['s5'],
-    rao: 'Bold: a deficit cut of about two points of GDP, a 40% fertiliser price rise and higher fuel prices.',
-    raoShort: 'Rao went bold',
-    match: (f) => f.budget === 'bold',
-  },
-  {
-    decision: 'The revolt',
-    scenes: ['s6'],
-    rao: 'A partial retreat: the fertiliser increase was cut to 30% and small and marginal farmers were exempted.',
-    raoShort: 'Rao trimmed it',
-    match: (_f, p) => p.s6?.id === 'B',
-  },
-];
-
-export const AFTERWARDS =
-  'India did not default. The pledged gold was redeemed within months. Growth, about 1% in 1991–92, recovered to over 5% the next year. Rao completed a full five-year term, the first prime minister from outside the Nehru–Gandhi family to do so.';
-
-export const OTHER_VIEW =
-  'Critics then and since have argued that the reforms were shaped by IMF conditions rather than democratic debate, that they favoured industry over agriculture, and that inequality widened in the decades after. Historians also disagree on how much credit belongs to Rao, to Manmohan Singh, and to groundwork laid in the 1980s.';

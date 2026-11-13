@@ -1,28 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { sound } from './audio';
-import { afterOutcome, choose, enter, freeText, isLost, newGame, type Game } from './engine';
-import {
-  AFTERWARDS,
-  BRIEFING,
-  ENDINGS,
-  FERTILISER_LINE,
-  HISTORY,
-  METER_LABEL,
-  OTHER_VIEW,
-  SCENES,
-  type Advisor,
-  type Beat,
-  type Env,
-  type Meters,
-  type Option,
-} from './episode';
+import { afterOutcome, choose, enter, freeText, newGame, type Delta, type Game } from './engine';
+import { EPISODES } from './episodes';
+import type { Advisor, Beat, Env, Episode, Option } from './episodes/types';
 import type { Focus } from './world/stage';
 import { World } from './world/World';
 
-/** Named speakers in narration beats who are also seated in the room. */
-const SPEAKER_ID: Record<string, string> = { Chandra: 'chandra' };
-
-/* ---------- art slots: drop real images in /public/art and they replace the placeholders ---------- */
+/* ---------- art slot: a real portrait dropped in /public/art/portraits appears beside that advisor's words ---------- */
 
 function useArt(src: string) {
   const [ok, setOk] = useState(false);
@@ -38,7 +22,6 @@ function useArt(src: string) {
   return ok ? src : null;
 }
 
-/** A photo beside the advisor's words, shown only once a real portrait has been supplied. */
 function Portrait({ id }: { id: string }) {
   const art = useArt(`/art/portraits/${id}.jpg`);
   if (!art) return null;
@@ -163,41 +146,38 @@ function Reveal({ items, endLabel, onEnd, single, onItem }: RevealProps) {
 
 /* ---------- HUD ---------- */
 
-function Deltas({ fx }: { fx: Partial<Meters> }) {
-  const keys = (Object.keys(fx) as (keyof Meters)[]).filter((k) => fx[k] && Math.abs(fx[k]!) < 50);
-  if (!keys.length) return null;
+function Deltas({ deltas }: { deltas: Delta[] }) {
+  if (!deltas.length) return null;
   return (
     <div className="deltas">
-      {keys.map((k) => {
-        const v = fx[k]!;
-        return (
-          <span key={k} className={v > 0 ? 'up' : 'down'}>
-            {v > 0 ? '▲' : '▼'} {METER_LABEL[k]} {v > 0 ? '+' : '−'}
-            {Math.abs(v)}
-            {k === 'cover' ? (Math.abs(v) === 1 ? ' day' : ' days') : ''}
-          </span>
-        );
-      })}
+      {deltas.map((d) => (
+        <span key={d.label} className={d.by > 0 ? 'up' : 'down'}>
+          {d.by > 0 ? '▲' : '▼'} {d.label} {d.by > 0 ? '+' : '−'}
+          {Math.abs(d.by)}
+          {d.unit?.startsWith('day') ? (Math.abs(d.by) === 1 ? ' day' : ' days') : ''}
+        </span>
+      ))}
     </div>
   );
 }
 
-function Hud({ m, muted, onMute }: { m: Meters; muted: boolean; onMute: () => void }) {
+function Hud({ g, muted, onMute }: { g: Game; muted: boolean; onMute: () => void }) {
+  const hero = g.ep.hero(g.meters, g.flags);
   return (
-    <header className={`hud ${m.cover <= 7 ? 'danger' : ''}`}>
+    <header className={`hud ${hero.danger ? 'danger' : ''}`}>
       <div className="cover">
-        <span className="label">Import cover</span>
-        <span className="num" key={m.cover}>
-          {m.cover}
+        <span className="label">{hero.label}</span>
+        <span className="num" key={hero.value}>
+          {hero.value}
         </span>
-        <span className="unit">{m.cover === 1 ? 'day' : 'days'}</span>
+        <span className="unit">{hero.unit}</span>
       </div>
       <div className="gauges">
-        {(['lender', 'capital', 'mood'] as const).map((k) => (
-          <div className={`gauge ${m[k] < 25 ? 'low' : ''}`} key={k}>
-            <span>{METER_LABEL[k]}</span>
+        {g.ep.gauges(g.meters, g.flags).map((r) => (
+          <div className={`gauge ${r.low ? 'low' : ''}`} key={r.key}>
+            <span key={r.label}>{r.label}</span>
             <i>
-              <b style={{ width: `${m[k]}%` }} />
+              <b style={{ width: `${r.value}%` }} />
             </i>
           </div>
         ))}
@@ -211,8 +191,34 @@ function Hud({ m, muted, onMute }: { m: Meters; muted: boolean; onMute: () => vo
 
 /* ---------- screens ---------- */
 
+function Title({ onBegin }: { onBegin: (ep: Episode) => void }) {
+  return (
+    <div className="title">
+      <div className="brand">Rewindo</div>
+      <p className="pitch">Sit in their chair. Make their call.</p>
+      <div className="episodes">
+        {EPISODES.map((ep) => (
+          <button className="episode" key={ep.id} onClick={() => onBegin(ep)}>
+            <span className="ep-num">Episode {ep.num}</span>
+            <span className="ep-year">{ep.year}</span>
+            <span className="ep-title">{ep.title}</span>
+            <span className="ep-you">
+              You are <b>{ep.you}</b>. {ep.hook}
+            </span>
+            <span className="ep-go">
+              {ep.begin} <i>▸</i>
+            </span>
+          </button>
+        ))}
+      </div>
+      <p className="fine">Best with sound on. All dialogue is dramatised.</p>
+    </div>
+  );
+}
+
 function SceneCard({ g, onGo }: { g: Game; onGo: () => void }) {
-  const s = SCENES[g.idx];
+  const s = g.ep.scenes[g.idx];
+  const hero = g.ep.hero(g.meters, g.flags);
   useEffect(() => {
     sound.telex();
     const onKey = (e: KeyboardEvent) => {
@@ -240,8 +246,8 @@ function SceneCard({ g, onGo }: { g: Game; onGo: () => void }) {
           ))}
         </ul>
       )}
-      <div className={`card-cover ${g.meters.cover <= 7 ? 'danger' : ''}`}>
-        Import cover: <b>{g.meters.cover}</b> days
+      <div className={`card-cover ${hero.danger ? 'danger' : ''}`}>
+        {hero.label}: <b>{hero.value}</b> {hero.unit}
       </div>
       <button className="next" tabIndex={-1}>
         Enter <span>▸</span>
@@ -251,12 +257,12 @@ function SceneCard({ g, onGo }: { g: Game; onGo: () => void }) {
 }
 
 function Decide({ g, setG }: { g: Game; setG: (g: Game) => void }) {
-  const s = SCENES[g.idx];
-  const options = s.options(g.flags);
+  const s = g.ep.scenes[g.idx];
+  const options = s.options(g.flags, g.meters);
   const [stamped, setStamped] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
-  const dead = isLost(g.meters);
+  const dead = g.ep.lost(g.meters, g.flags);
 
   const pick = (opt: Option) => {
     if (stamped) return;
@@ -269,7 +275,7 @@ function Decide({ g, setG }: { g: Game; setG: (g: Game) => void }) {
     e.preventDefault();
     if (!text.trim()) return;
     const next = freeText(g, text.trim());
-    if (isLost(next.meters)) sound.hit();
+    if (g.ep.lost(next.meters, next.flags)) sound.hit();
     setG(next);
     setText('');
     setOpen(false);
@@ -277,14 +283,14 @@ function Decide({ g, setG }: { g: Game; setG: (g: Game) => void }) {
 
   return (
     <div className={`decide ${stamped ? 'stamping' : ''}`}>
-      <div className="file-head">For orders of the Prime Minister</div>
+      <div className="file-head">{g.ep.decideHead}</div>
       <h3>{s.prompt}</h3>
 
       {g.freeReply && (
         <div className="reply">
           <div className="who">{g.freeReply.who}</div>
           <p>{g.freeReply.text}</p>
-          <Deltas fx={g.freeReply.fx} />
+          <Deltas deltas={g.freeReply.deltas} />
         </div>
       )}
 
@@ -294,7 +300,7 @@ function Decide({ g, setG }: { g: Game; setG: (g: Game) => void }) {
         </button>
       ) : (
         <>
-          <div className="options">
+          <div className={`options ${options.length === 1 ? 'solo' : ''}`}>
             {options.map((o) => (
               <button
                 key={o.id}
@@ -311,6 +317,7 @@ function Decide({ g, setG }: { g: Game; setG: (g: Game) => void }) {
 
           {!stamped &&
             !g.freeUsed &&
+            options.length > 1 &&
             (open ? (
               <form className="free" onSubmit={submit}>
                 <input
@@ -335,36 +342,37 @@ function Decide({ g, setG }: { g: Game; setG: (g: Game) => void }) {
 }
 
 function Ending({ g, onNext }: { g: Game; onNext: () => void }) {
-  const e = ENDINGS[g.ending!];
+  const e = g.ep.endings[g.ending!];
   useEffect(() => sound.hit(), []);
-  const items: Item[] = e.text.map((text) => ({ text }));
-  const survived = g.ending === 'holding' || g.ending === 'opening';
-  if (survived && g.flags.fertiliser) items.push({ text: FERTILISER_LINE[g.flags.fertiliser] });
   return (
     <div className="ending">
       <div className="card-num">Your ending</div>
       <h2>{e.title}</h2>
-      <Reveal items={items} endLabel="What really happened" onEnd={onNext} />
+      <Reveal
+        items={e.text(g.flags, g.meters).map((text) => ({ text }))}
+        endLabel="What really happened"
+        onEnd={onNext}
+      />
     </div>
   );
 }
 
-function History({ g, onReplay }: { g: Game; onReplay: () => void }) {
+function History({ g, onReplay, onMenu }: { g: Game; onReplay: () => void; onMenu: () => void }) {
+  const { ep } = g;
   const [copied, setCopied] = useState(false);
-  const rows = HISTORY.map((r) => {
+  const rows = ep.history.map((r) => {
     const mine = r.scenes.map((id) => g.picked[id]).find(Boolean);
     return { ...r, mine: mine?.short ?? null, same: !!mine && r.match(g.flags, g.picked) };
   });
   const faced = rows.filter((r) => r.mine);
   const same = faced.filter((r) => r.same).length;
-  const title = ENDINGS[g.ending!].title.toUpperCase();
   const share = [
-    'REWINDO · 1991',
-    'I was Narasimha Rao for six weeks.',
+    `REWINDO · ${ep.year}`,
+    ep.shareLine,
     '',
-    ...faced.map((r) => (r.same ? `✔ ${r.mine} — like Rao` : `✘ ${r.mine} — ${r.raoShort}`)),
+    ...faced.map((r) => (r.same ? `✔ ${r.mine} — like ${ep.short}` : `✘ ${r.mine} — ${r.realShort}`)),
     '',
-    `Ending: ${title}`,
+    `Ending: ${ep.endings[g.ending!].title.toUpperCase()}`,
     'What would you have done?',
   ].join('\n');
 
@@ -382,14 +390,14 @@ function History({ g, onReplay }: { g: Game; onReplay: () => void }) {
       <div className="card-num">The record</div>
       <h2>What really happened</h2>
       <p className="tally">
-        You made the same call as Rao on <b>{same}</b> of <b>{faced.length}</b> decisions.
+        You made the same call as {ep.short} on <b>{same}</b> of <b>{faced.length}</b> decisions.
       </p>
       <div className="rows">
         {rows.map((r) => (
           <div className={`row ${r.mine ? (r.same ? 'same' : 'diff') : 'none'}`} key={r.decision}>
             <div className="row-head">
               <span>{r.decision}</span>
-              <em>{r.mine ? (r.same ? '✔ Same as Rao' : '✘ Different') : 'You never faced this'}</em>
+              <em>{r.mine ? (r.same ? `✔ Same as ${ep.short}` : '✘ Different') : 'You never faced this'}</em>
             </div>
             {r.mine && (
               <p className="mine">
@@ -397,15 +405,15 @@ function History({ g, onReplay }: { g: Game; onReplay: () => void }) {
               </p>
             )}
             <p className="rao">
-              <span>Rao</span> {r.rao}
+              <span>{ep.short}</span> {r.real}
             </p>
           </div>
         ))}
       </div>
       <h4>Afterwards</h4>
-      <p className="prose">{AFTERWARDS}</p>
+      <p className="prose">{ep.afterwards}</p>
       <h4>The other view</h4>
-      <p className="prose">{OTHER_VIEW}</p>
+      <p className="prose">{ep.otherView}</p>
 
       <pre className="share">{share}</pre>
       <div className="actions">
@@ -414,6 +422,9 @@ function History({ g, onReplay }: { g: Game; onReplay: () => void }) {
         </button>
         <button className="ghost" onClick={onReplay}>
           Play again
+        </button>
+        <button className="ghost" onClick={onMenu}>
+          All episodes
         </button>
       </div>
       <p className="fine">All dialogue is dramatised. Figures are being checked against published sources.</p>
@@ -424,75 +435,75 @@ function History({ g, onReplay }: { g: Game; onReplay: () => void }) {
 /* ---------- app ---------- */
 
 export default function App() {
-  const [g, setG] = useState<Game>(newGame);
+  const [g, setG] = useState<Game>(() => newGame(EPISODES[0]));
   const [muted, setMuted] = useState(false);
   const [speaker, setSpeaker] = useState<string | null>(null);
-  const scene = g.idx >= 0 ? SCENES[g.idx] : null;
-
-  useEffect(() => sound.setCover(g.meters.cover), [g.meters.cover]);
+  const { ep } = g;
+  const scene = g.idx >= 0 ? ep.scenes[g.idx] : null;
 
   const inScene = ['card', 'beats', 'counsel', 'decide', 'outcome'].includes(g.phase);
-  const env: Env =
-    g.phase === 'ending' ? ENDINGS[g.ending!].env : g.phase === 'history' ? 'study' : (scene?.env ?? 'study');
-  const cast = inScene && scene ? scene.advisors(g.flags).map((a) => a.id) : [];
+  const pressure = g.phase === 'title' ? 0 : ep.pressure(g.meters, g.flags);
+  useEffect(() => sound.setPressure(pressure), [pressure]);
+
+  const env: Env = g.phase === 'ending' ? ep.endings[g.ending!].env : g.phase === 'history' ? 'study' : (scene?.env ?? 'study');
+  const cast = inScene && scene ? scene.advisors(g.flags, g.meters).map((a) => a.id) : [];
   const focus: Focus = g.phase === 'decide' ? 'file' : inScene && g.phase !== 'card' ? 'room' : 'wide';
   const talking = g.phase === 'beats' || g.phase === 'counsel' ? speaker : null;
 
   const onItem = useCallback(
-    (it: Beat & { advisor?: Advisor }) => setSpeaker(it.advisor?.id ?? (it.who ? (SPEAKER_ID[it.who] ?? null) : null)),
-    [],
+    (it: Item) => setSpeaker(it.advisor?.id ?? (it.who ? (ep.speakers[it.who] ?? null) : null)),
+    [ep],
   );
 
-  const begin = () => {
+  const begin = (chosen: Episode) => {
     sound.start();
-    setG({ ...g, phase: 'briefing' });
+    setG(newGame(chosen, 'briefing'));
   };
   const go = useCallback((phase: Game['phase']) => setG((cur) => ({ ...cur, phase })), []);
   const toCard = useCallback(() => setG((cur) => enter(cur, 0)), []);
   const toBeats = useCallback(() => go('beats'), [go]);
-  const toCounsel = useCallback(() => go('counsel'), [go]);
+  // A scene with nobody to consult goes straight to the decision.
+  const toCounsel = useCallback(
+    () =>
+      setG((cur) => {
+        const s = cur.ep.scenes[cur.idx];
+        return { ...cur, phase: s.advisors(cur.flags, cur.meters).length ? 'counsel' : 'decide' };
+      }),
+    [],
+  );
   const toDecide = useCallback(() => go('decide'), [go]);
   const toNext = useCallback(() => setG((cur) => afterOutcome(cur)), []);
   const toHistory = useCallback(() => go('history'), [go]);
 
   const showHud = !['title', 'briefing', 'history'].includes(g.phase);
-  const key = `${g.phase}-${g.idx}`;
+  const key = `${ep.id}-${g.phase}-${g.idx}`;
 
   return (
-    <div className={`stage phase-${g.phase} ${g.meters.cover <= 7 && inScene ? 'tense' : ''}`}>
+    <div className={`stage phase-${g.phase} ${pressure >= 0.5 && inScene ? 'tense' : ''}`}>
       <World env={env} cast={cast} speaker={talking} focus={focus} dim={!inScene || g.phase === 'card'} />
-      {showHud && <Hud m={g.meters} muted={muted} onMute={() => setMuted(sound.toggle())} />}
+      {showHud && <Hud g={g} muted={muted} onMute={() => setMuted(sound.toggle())} />}
 
       <main className="content" key={key}>
-        {g.phase === 'title' && (
-          <div className="title">
-            <div className="brand">Rewindo · Episode 01</div>
-            <h1>1991</h1>
-            <div className="sub">Two Weeks of Dollars</div>
-            <p className="you">
-              You are <b>P.V. Narasimha Rao</b>, Prime Minister of India.
-              <br />
-              The country has fourteen days of foreign exchange left.
-            </p>
-            <button className="primary" onClick={begin}>
-              Take the oath
-            </button>
-            <p className="fine">Best with sound on. About 15 minutes. All dialogue is dramatised.</p>
-          </div>
-        )}
+        {g.phase === 'title' && <Title onBegin={begin} />}
 
-        {g.phase === 'briefing' && <Reveal items={BRIEFING} endLabel="Open the file" onEnd={toCard} />}
+        {g.phase === 'briefing' && <Reveal items={ep.briefing} endLabel="Begin" onEnd={toCard} />}
 
         {g.phase === 'card' && <SceneCard g={g} onGo={toBeats} />}
 
         {g.phase === 'beats' && scene && (
-          <Reveal single items={scene.beats(g.flags)} endLabel="Hear your advisors" onEnd={toCounsel} onItem={onItem} />
+          <Reveal
+            single
+            items={scene.beats(g.flags, g.meters)}
+            endLabel={scene.advisors(g.flags, g.meters).length ? 'Hear your advisors' : 'Continue'}
+            onEnd={toCounsel}
+            onItem={onItem}
+          />
         )}
 
         {g.phase === 'counsel' && scene && (
           <Reveal
             single
-            items={scene.advisors(g.flags).map((a) => ({ text: a.text, advisor: a }))}
+            items={scene.advisors(g.flags, g.meters).map((a) => ({ text: a.text, advisor: a }))}
             endLabel="Decide"
             onEnd={toDecide}
             onItem={onItem}
@@ -510,13 +521,15 @@ export default function App() {
               endLabel="Continue"
               onEnd={toNext}
             />
-            <Deltas fx={g.outcome.fx} />
+            <Deltas deltas={g.outcome.deltas} />
           </div>
         )}
 
         {g.phase === 'ending' && <Ending g={g} onNext={toHistory} />}
 
-        {g.phase === 'history' && <History g={g} onReplay={() => setG(newGame())} />}
+        {g.phase === 'history' && (
+          <History g={g} onReplay={() => setG(newGame(ep, 'briefing'))} onMenu={() => setG(newGame(ep))} />
+        )}
       </main>
     </div>
   );

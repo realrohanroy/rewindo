@@ -119,11 +119,11 @@ class Sound {
     this.thump(0, 0.9, 60, 28, 1.2);
   }
 
-  setCover(days: number) {
-    this.tense = days <= 7;
+  /** 0 is calm, 1 is critical. The drone opens up as pressure rises; past halfway a heartbeat joins it. */
+  setPressure(p: number) {
+    this.tense = p >= 0.5;
     if (this.filter && this.ctx) {
-      const target = 150 + (14 - Math.min(14, Math.max(0, days))) * 28;
-      this.filter.frequency.setTargetAtTime(target, this.ctx.currentTime, 1.5);
+      this.filter.frequency.setTargetAtTime(150 + Math.max(0, Math.min(1, p)) * 390, this.ctx.currentTime, 1.5);
     }
   }
 

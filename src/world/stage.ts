@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Env } from '../episode';
+import type { Env } from '../episodes/types';
 import { buildPerson, type Person } from './people';
 import { buildRoom, type Room } from './rooms';
 

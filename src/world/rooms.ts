@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Env } from '../episode';
+import type { Env } from '../episodes/types';
 
 export type Room = {
   group: THREE.Group;

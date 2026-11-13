@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { Env } from '../episode';
+import type { Env } from '../episodes/types';
 import { Stage, type Focus } from './stage';
 
 type Props = { env: Env; cast: string[]; speaker: string | null; focus: Focus; dim: boolean };

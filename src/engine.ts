@@ -1,206 +1,119 @@
-import { SCENES, START, type EndingId, type Flags, type Meters, type Option } from './episode';
+import type { Episode, Flags, Fx, Meters, Option, Reading } from './episodes/types';
 
 export type Phase = 'title' | 'briefing' | 'card' | 'beats' | 'counsel' | 'decide' | 'outcome' | 'ending' | 'history';
 
-export type FreeReply = { who: string; text: string; fx: Partial<Meters> };
+/** What the player could see change: the difference between two sets of readings. */
+export type Delta = { label: string; by: number; unit?: string };
 
 export type Game = {
+  ep: Episode;
   phase: Phase;
   idx: number;
   meters: Meters;
   flags: Flags;
   picked: Record<string, Option>;
   notes: string[];
-  outcome?: { text: string; fx: Partial<Meters> };
-  ending?: EndingId;
+  outcome?: { text: string; deltas: Delta[]; end?: string };
+  ending?: string;
   freeUsed: boolean;
-  freeReply?: FreeReply;
+  freeReply?: { who: string; text: string; deltas: Delta[] };
 };
 
-export const newGame = (): Game => ({
-  phase: 'title',
+export const newGame = (ep: Episode, phase: Phase = 'title'): Game => ({
+  ep,
+  phase,
   idx: -1,
-  meters: { ...START },
+  meters: Object.fromEntries(ep.meters.map((d) => [d.key, d.start])),
   flags: {},
   picked: {},
   notes: [],
   freeUsed: false,
 });
 
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-
-export function applyFx(m: Meters, fx: Partial<Meters>): Meters {
-  return {
-    cover: Math.max(0, m.cover + (fx.cover ?? 0)),
-    lender: clamp(m.lender + (fx.lender ?? 0), 0, 100),
-    capital: clamp(m.capital + (fx.capital ?? 0), 0, 100),
-    mood: clamp(m.mood + (fx.mood ?? 0), 0, 100),
-  };
+function applyFx(ep: Episode, m: Meters, fx: Fx): Meters {
+  const next = { ...m };
+  for (const d of ep.meters) {
+    const by = fx[d.key];
+    if (by) next[d.key] = Math.max(0, Math.min(d.max ?? 100, m[d.key] + by));
+  }
+  return next;
 }
 
-function lost(m: Meters): EndingId | undefined {
-  if (m.cover <= 0) return 'default';
-  if (m.capital <= 0) return 'fall';
-  return undefined;
-}
+export const readings = (ep: Episode, m: Meters, f: Flags): Reading[] => [ep.hero(m, f), ...ep.gauges(m, f)];
 
-function finalEnding(f: Flags): EndingId {
-  const reforms = [
-    f.licence === 'abolished',
-    f.budget === 'bold',
-    f.devalued === 'two_step' || f.devalued === 'one_shot',
-  ].filter(Boolean).length;
-  return reforms >= 2 ? 'opening' : 'holding';
+function diff(before: Reading[], after: Reading[]): Delta[] {
+  return after
+    .map((a) => ({ label: a.label, unit: a.unit, by: a.value - (before.find((b) => b.key === a.key)?.value ?? a.value) }))
+    .filter((d) => d.by !== 0 && Math.abs(d.by) < 50);
 }
 
 /** Move to the next playable scene at or after `from`, applying the passage of time. */
 export function enter(g: Game, from: number): Game {
+  const { ep } = g;
   let idx = from;
-  while (idx < SCENES.length && SCENES[idx].skip?.(g.flags)) idx++;
-  if (idx >= SCENES.length) return { ...g, phase: 'ending', ending: finalEnding(g.flags) };
+  while (idx < ep.scenes.length && ep.scenes[idx].skip?.(g.flags, g.meters)) idx++;
+  if (idx >= ep.scenes.length) return { ...g, phase: 'ending', ending: ep.final(g.meters, g.flags) };
 
-  const scene = SCENES[idx];
-  let meters = g.meters;
-  let flags = g.flags;
-  const notes: string[] = [];
-
-  if (scene.days > 0) {
-    let days = scene.days;
-    notes.push(`${scene.days} days of imports paid for.`);
-    if (flags.fm === 'self') {
-      days += 1;
-      notes.push('You hold two portfolios. Decisions wait on your desk: 1 more day lost.');
-    }
-    if (meters.lender < 15) {
-      days += 2;
-      notes.push('Lenders have lost faith. Deposits are fleeing abroad: 2 more days lost.');
-    }
-    meters = applyFx(meters, { cover: -days });
-    if (meters.mood < 25) {
-      meters = applyFx(meters, { capital: -5 });
-      notes.push('Anger in the streets is reaching your own MPs.');
-    }
-    if (flags.gold === 'refused' && meters.cover < 7) {
-      meters = applyFx(meters, { cover: 6, mood: -15, capital: -5 });
-      flags = { ...flags, gold: 'pledged' };
-      notes.push(
-        'With under a week of imports left, the Governor returns. This time there is no decision to make. The gold goes to London.',
-      );
-    }
-  }
-
-  const base: Game = {
-    ...g,
-    idx,
-    meters,
-    flags,
-    notes,
-    outcome: undefined,
-    freeUsed: false,
-    freeReply: undefined,
-  };
-  const end = lost(meters);
+  const arrived = ep.onEnter?.(ep.scenes[idx], g.meters, g.flags) ?? { meters: g.meters, flags: g.flags, notes: [] };
+  const base: Game = { ...g, idx, ...arrived, outcome: undefined, freeUsed: false, freeReply: undefined };
+  const end = ep.lost(base.meters, base.flags);
   return end ? { ...base, phase: 'ending', ending: end } : { ...base, phase: 'card' };
 }
 
 export function choose(g: Game, opt: Option): Game {
-  const scene = SCENES[g.idx];
+  const { ep } = g;
+  const flags = { ...g.flags, ...opt.set };
+  let meters = applyFx(ep, g.meters, opt.fx);
+  meters = ep.afterChoice?.({ m: g.meters, f: g.flags }, { m: meters, f: flags }) ?? meters;
   return {
     ...g,
-    meters: applyFx(g.meters, opt.fx),
-    flags: { ...g.flags, ...opt.set },
-    picked: { ...g.picked, [scene.id]: opt },
-    outcome: { text: opt.outcome, fx: opt.fx },
+    meters,
+    flags,
+    picked: { ...g.picked, [ep.scenes[g.idx].id]: opt },
+    outcome: {
+      text: typeof opt.outcome === 'function' ? opt.outcome(meters, flags) : opt.outcome,
+      deltas: diff(readings(ep, g.meters, g.flags), readings(ep, meters, flags)),
+      end: opt.end,
+    },
     freeReply: undefined,
     phase: 'outcome',
   };
 }
 
 export function afterOutcome(g: Game): Game {
-  const end = lost(g.meters);
+  const end = g.outcome?.end ?? g.ep.lost(g.meters, g.flags);
   if (end) return { ...g, phase: 'ending', ending: end };
   return enter(g, g.idx + 1);
 }
 
+const OFF_LIMITS = /\b(kill|murder|assassinat|riot|bomb|shoot|torture|muslim|hindu|sikh|christian|caste)\b/i;
+
 /**
  * "Do something else" box. In this prototype there is no language model behind it:
- * typed actions are matched against the pre-authored cases from the script.
+ * typed orders are matched against each episode's pre-authored cases.
  */
-type FreeCase = { match: RegExp; who: string; text: string; fx: Partial<Meters>; ending?: EndingId };
-
-const FREE_CASES: FreeCase[] = [
-  {
-    match: /\b(kill|riot|attack|bomb|arrest|jail|shoot|muslim|hindu|sikh|christian|caste)\b/i,
-    who: 'Rewindo',
-    text: 'That is outside what this episode will simulate. Choose from the options on the file.',
-    fx: {},
-  },
-  {
-    match: /soviet|ussr|moscow|russia|gorbachev/i,
-    who: 'Naresh Chandra',
-    text: 'Sir, Moscow is asking us about rupee trade credits. They have months left, not money. A day is gone finding that out.',
-    fx: { cover: -1 },
-  },
-  {
-    match: /print|mint|pay in rupees/i,
-    who: 'S. Venkitaramanan',
-    text: 'Oil is sold in dollars, Prime Minister. We cannot print those. We have lost a day discussing it.',
-    fx: { cover: -1 },
-  },
-  {
-    match: /freeze|block|lock|seize/i,
-    who: 'S. Venkitaramanan',
-    text: 'The order is drafted by noon and leaked by two. Every deposit we did not freeze is leaving on the next wire.',
-    fx: { lender: -20 },
-  },
-  {
-    match: /moratorium|stop paying|suspend (the )?(debt|payment)|default|refuse to pay/i,
-    who: 'Naresh Chandra',
-    text: 'It was discussed, sir, and rejected by everyone who has ever had to borrow again. If that is your order, I will send the telex.',
-    fx: { cover: -99 },
-    ending: 'default',
-  },
-  {
-    match: /election|mandate|dissolve|resign/i,
-    who: 'The Veteran',
-    text: 'A campaign takes weeks. The importers will not wait for the counting. But you are the Prime Minister.',
-    fx: { cover: -10, capital: 5 },
-  },
-  {
-    match: /donat|appeal|citizen|people.*gold|temple/i,
-    who: 'Naresh Chandra',
-    text: 'People come forward. Bangles, coins, a wedding necklace. It is moving, sir. It is also about a day of oil.',
-    fx: { mood: 10, cover: 1 },
-  },
-  {
-    match: /privati|disinvest|sell.*(psu|public sector|compan|air india)/i,
-    who: 'A.N. Verma',
-    text: 'It is the right signal and the lenders will notice. But no buyer will wire money this quarter.',
-    fx: { lender: 5 },
-  },
-  {
-    match: /imf|world bank|washington/i,
-    who: 'Naresh Chandra',
-    text: 'The IMF is already in the room, sir. They are waiting to see what you do, which is why the options on this file exist.',
-    fx: {},
-  },
-];
-
 export function freeText(g: Game, input: string): Game {
-  const hit = FREE_CASES.find((c) => c.match.test(input));
-  if (!hit) {
+  const { ep } = g;
+  if (OFF_LIMITS.test(input))
     return {
       ...g,
       freeReply: {
-        who: 'Naresh Chandra',
-        text: 'I will have that examined, sir. For today, the file needs one of these orders.',
-        fx: {},
+        who: 'Rewindo',
+        text: 'That is outside what this episode will simulate. Choose from the options on the file.',
+        deltas: [],
       },
     };
-  }
-  const meters = applyFx(g.meters, hit.fx);
-  const next: Game = { ...g, meters, freeUsed: true, freeReply: { who: hit.who, text: hit.text, fx: hit.fx } };
-  return next;
+  const hit = ep.free.find((c) => c.match.test(input));
+  if (!hit) return { ...g, freeReply: { ...ep.fallback, deltas: [] } };
+  const meters = applyFx(ep, g.meters, hit.fx);
+  return {
+    ...g,
+    meters,
+    freeUsed: true,
+    freeReply: {
+      who: hit.who,
+      text: hit.text,
+      deltas: diff(readings(ep, g.meters, g.flags), readings(ep, meters, g.flags)),
+    },
+  };
 }
-
-export const isLost = lost;

@@ -371,31 +371,83 @@ p {
   text-transform: uppercase;
   color: var(--amber);
 }
-.title h1 {
-  margin: 0;
-  font-size: clamp(6.5rem, 26vw, 15rem);
+.title .brand {
+  font-size: 1.1rem;
+  letter-spacing: 0.5em;
+  animation: rise 1.2s ease both;
+}
+.pitch {
+  margin: 14px 0 34px;
+  font-size: clamp(1.6rem, 4.5vw, 2.6rem);
+  font-style: italic;
+  animation: rise 1.2s 0.2s ease both;
+}
+.content > .title {
+  max-width: 940px;
+}
+.episodes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+  text-align: left;
+}
+.episode {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 24px 20px;
+  background: rgba(8, 10, 9, 0.72);
+  border: 1px solid var(--faint);
+  backdrop-filter: blur(6px);
+  transition:
+    transform 0.25s,
+    border-color 0.25s,
+    background 0.25s;
+  animation: rise 1.2s 0.5s ease both;
+}
+.episode:nth-child(2) {
+  animation-delay: 0.7s;
+}
+.episode:hover,
+.episode:focus-visible {
+  border-color: var(--amber);
+  background: rgba(30, 24, 12, 0.85);
+  transform: translateY(-4px);
+  outline: none;
+}
+.ep-num,
+.ep-go {
+  font-family: var(--type);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.ep-year {
+  font-size: clamp(4rem, 11vw, 6.5rem);
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: lining-nums;
-  letter-spacing: -0.02em;
-  text-shadow: 0 0 80px rgba(226, 164, 68, 0.35);
-  animation: rise 1.6s ease both;
+  text-shadow: 0 0 60px rgba(226, 164, 68, 0.3);
 }
-.title .sub {
-  font-size: clamp(1.5rem, 4vw, 2.4rem);
+.ep-title {
+  font-size: 1.6rem;
   font-style: italic;
-  animation: rise 1.6s 0.4s ease both;
+  line-height: 1.15;
 }
-.you {
-  margin: 28px auto;
-  max-width: 30em;
-  font-size: 1.25rem;
-  line-height: 1.5;
+.ep-you {
+  flex: 1;
+  margin: 14px 0 20px;
+  font-size: 1.15rem;
+  line-height: 1.4;
   color: var(--dim);
-  animation: rise 1.6s 0.8s ease both;
 }
-.you b {
+.ep-you b {
   color: var(--paper);
+}
+.ep-go i {
+  font-style: normal;
+  display: inline-block;
+  animation: nudge 1.2s ease-in-out infinite;
 }
 .primary,
 .ghost {
@@ -422,9 +474,6 @@ p {
 }
 .ghost:hover {
   border-color: var(--paper);
-}
-.title .primary {
-  animation: rise 1.6s 1.2s ease both;
 }
 .fine {
   margin-top: 22px;
@@ -825,4 +874,9 @@ p {
   .options {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.options.solo {
+  grid-template-columns: 1fr;
+  max-width: 460px;
 }

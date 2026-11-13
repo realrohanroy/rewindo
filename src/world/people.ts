@@ -75,6 +75,54 @@ const LOOKS: Record<string, Look> = {
     torso: WHITE_KHADI,
     sleeves: WHITE_KHADI,
   },
+  // Sanjay Gandhi: young, receding hairline, heavy dark glasses, white kurta.
+  sanjay: {
+    skin: 0xc79a76,
+    build: 1,
+    hair: { style: 'sides', color: 0x1a1614 },
+    glasses: 0x0f0d0c,
+    torso: WHITE_KHADI,
+    sleeves: WHITE_KHADI,
+  },
+  // Siddhartha Shankar Ray: tall barrister, swept silver-grey hair, dark suit.
+  ray: {
+    skin: 0xc49672,
+    build: 1.12,
+    hair: { style: 'full', color: 0x8f8c87 },
+    torso: 0x23252b,
+    sleeves: 0x23252b,
+    shirt: 0xe8e6e0,
+    tie: 0x4a1a22,
+  },
+  // P.N. Dhar: slight academic, thinning grey hair, glasses, grey suit.
+  dhar: {
+    skin: 0xc9a07c,
+    build: 0.92,
+    hair: { style: 'sides', color: 0x9a9793 },
+    glasses: 0x2a2520,
+    torso: 0x4a4d52,
+    sleeves: 0x4a4d52,
+    shirt: 0xe8e6e0,
+    tie: 0x2a3550,
+  },
+  // R.K. Dhawan: dark hair, clean-shaven, closed-collar safari suit.
+  dhawan: {
+    skin: 0xb98863,
+    build: 1.02,
+    hair: { style: 'full', color: 0x1b1816 },
+    torso: 0x6f6a5c,
+    sleeves: 0x6f6a5c,
+  },
+  // The Elder (fictional): Gandhi cap, glasses, dark closed-collar coat.
+  elder: {
+    skin: 0xa77750,
+    build: 1.15,
+    hair: { style: 'sides', color: 0xcfccc5 },
+    glasses: 0x2a2520,
+    cap: true,
+    torso: 0x2c2823,
+    sleeves: 0x2c2823,
+  },
   // The party Finance Minister (fictional): black hair, moustache, heavy glasses, brown jacket.
   'fm-politician': {
     skin: 0x99694a,
