@@ -75,11 +75,11 @@ const LOOKS: Record<string, Look> = {
     torso: WHITE_KHADI,
     sleeves: WHITE_KHADI,
   },
-  // Sanjay Gandhi: young, receding hairline, heavy dark glasses, white kurta.
+  // Sanjay Gandhi: 29, full dark hair, heavy dark glasses, white kurta.
   sanjay: {
     skin: 0xc79a76,
     build: 1,
-    hair: { style: 'sides', color: 0x1a1614 },
+    hair: { style: 'full', color: 0x1a1614 },
     glasses: 0x0f0d0c,
     torso: WHITE_KHADI,
     sleeves: WHITE_KHADI,

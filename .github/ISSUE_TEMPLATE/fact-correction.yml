@@ -1,0 +1,40 @@
+name: Fact correction
+description: A date, figure, name or event in an episode is wrong or disputed.
+title: "[Fact] "
+labels: ["history", "fact-check"]
+body:
+  - type: dropdown
+    id: episode
+    attributes:
+      label: Episode
+      options:
+        - "01 · 1991 · Two Weeks of Dollars"
+        - "02 · 1975 · The Midnight Proclamation"
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What the game says
+      description: Quote the line, or describe the scene and decision.
+    validations:
+      required: true
+  - type: textarea
+    id: right
+    attributes:
+      label: What the record says
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source
+      description: Book (with page or chapter), paper, archive, or official document. Links welcome.
+    validations:
+      required: true
+  - type: checkboxes
+    id: verify
+    attributes:
+      label: Is this one of the items marked [verify] in the script?
+      options:
+        - label: Yes, it's on the fact-check list

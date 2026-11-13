@@ -1,0 +1,35 @@
+name: Bug or playtest feedback
+description: Something broke, confused you, or felt unfair.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: episode
+    attributes:
+      label: Episode
+      options:
+        - "01 · 1991 · Two Weeks of Dollars"
+        - "02 · 1975 · The Midnight Proclamation"
+        - "Title screen or not episode-specific"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Which scene, which choice, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: path
+    attributes:
+      label: Your choices so far
+      description: Paste your share card from the end screen if you got there.
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: "e.g. Pixel 7, Chrome 130 / Windows 11, Firefox 132"
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Drag an image in, if it helps.

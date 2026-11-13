@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 330" width="1280" height="330" role="img" aria-labelledby="t d">
+  <title id="t">How a scene plays</title>
+  <desc id="d">Each scene runs in five steps: the scene card, the situation, your advisors, your order, and the consequence. Then time passes and the next scene begins.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#e2a444"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="330" rx="14" fill="#0b0c0a"/>
+  <text x="48" y="58" font-family="'Courier New', Courier, monospace" font-size="15" letter-spacing="5" fill="#e2a444">HOW A SCENE PLAYS</text>
+
+  <g font-family="Georgia, 'Times New Roman', serif" fill="#ebe1c8">
+    <!-- 1 -->
+    <g transform="translate(48 96)">
+      <rect width="210" height="150" rx="6" fill="#151612" stroke="#ebe1c8" stroke-opacity=".18"/>
+      <text x="20" y="34" font-family="'Courier New', Courier, monospace" font-size="13" letter-spacing="3" fill="#e2a444">01 · CARD</text>
+      <text x="20" y="72" font-size="23">Date, place,</text>
+      <text x="20" y="100" font-size="23">what it cost</text>
+      <text x="20" y="128" font-size="15" fill-opacity=".6">to get here</text>
+    </g>
+    <!-- 2 -->
+    <g transform="translate(290 96)">
+      <rect width="210" height="150" rx="6" fill="#151612" stroke="#ebe1c8" stroke-opacity=".18"/>
+      <text x="20" y="34" font-family="'Courier New', Courier, monospace" font-size="13" letter-spacing="3" fill="#e2a444">02 · SITUATION</text>
+      <text x="20" y="72" font-size="23">What you know.</text>
+      <text x="20" y="100" font-size="23">Not what</text>
+      <text x="20" y="128" font-size="23">happens next.</text>
+    </g>
+    <!-- 3 -->
+    <g transform="translate(532 96)">
+      <rect width="210" height="150" rx="6" fill="#151612" stroke="#ebe1c8" stroke-opacity=".18"/>
+      <text x="20" y="34" font-family="'Courier New', Courier, monospace" font-size="13" letter-spacing="3" fill="#e2a444">03 · COUNSEL</text>
+      <text x="20" y="72" font-size="23">Real advisors</text>
+      <text x="20" y="100" font-size="23">disagree,</text>
+      <text x="20" y="128" font-size="23">to your face</text>
+    </g>
+    <!-- 4 -->
+    <g transform="translate(774 96)">
+      <rect width="210" height="150" rx="6" fill="#1e180c" stroke="#e2a444"/>
+      <text x="20" y="34" font-family="'Courier New', Courier, monospace" font-size="13" letter-spacing="3" fill="#e2a444">04 · ORDER</text>
+      <text x="20" y="72" font-size="23">Pick an option,</text>
+      <text x="20" y="100" font-size="23">or type your</text>
+      <text x="20" y="128" font-size="23">own order</text>
+      <g transform="translate(118 2) rotate(-10)">
+        <rect width="88" height="26" fill="#0b0c0a" stroke="#d2402f" stroke-width="2.5"/>
+        <text x="44" y="18" text-anchor="middle" font-family="'Courier New', Courier, monospace" font-size="13" font-weight="700" letter-spacing="3" fill="#d2402f">ORDERED</text>
+      </g>
+    </g>
+    <!-- 5 -->
+    <g transform="translate(1016 96)">
+      <rect width="216" height="150" rx="6" fill="#151612" stroke="#ebe1c8" stroke-opacity=".18"/>
+      <text x="20" y="34" font-family="'Courier New', Courier, monospace" font-size="13" letter-spacing="3" fill="#e2a444">05 · CONSEQUENCE</text>
+      <text x="20" y="72" font-size="23">The world</text>
+      <text x="20" y="100" font-size="23">answers back</text>
+      <text x="20" y="124" font-family="'Courier New', Courier, monospace" font-size="13" fill="#7fb58a">▲ Lenders +15</text>
+      <text x="20" y="142" font-family="'Courier New', Courier, monospace" font-size="13" fill="#d2402f">▼ Public mood −8</text>
+    </g>
+  </g>
+
+  <g stroke="#e2a444" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M262 171 H286"/><path d="M504 171 H528"/><path d="M746 171 H770"/><path d="M988 171 H1012"/>
+    <path d="M1124 250 V286 H153 V254" stroke-dasharray="5 6"/>
+  </g>
+  <text x="640" y="312" text-anchor="middle" font-family="'Courier New', Courier, monospace" font-size="13" letter-spacing="3" fill="#ebe1c8" fill-opacity=".6">TIME PASSES · METERS DRIFT · THE NEXT SCENE OPENS · SIX DECISIONS · SEVERAL ENDINGS</text>
+</svg>

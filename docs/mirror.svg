@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 380" width="1280" height="380" role="img" aria-labelledby="t d">
+  <title id="t">The mirror mechanic in Episode 02</title>
+  <desc id="d">Once the press is censored, the public trust figure you are shown only rises, while the true figure falls in secret. On election night the two lines meet, and the true value is revealed.</desc>
+  <rect width="1280" height="380" rx="14" fill="#0b0c0a"/>
+  <text x="48" y="58" font-family="'Courier New', Courier, monospace" font-size="15" letter-spacing="5" fill="#e2a444">EPISODE 02 · THE MIRROR</text>
+  <text x="48" y="94" font-family="Georgia, 'Times New Roman', serif" font-size="25" fill="#ebe1c8">Silence the press, and the game stops telling you the truth too.</text>
+
+  <g transform="translate(96 126)">
+    <!-- axes -->
+    <path d="M0 0 V200 H1088" stroke="#ebe1c8" stroke-opacity=".25" fill="none"/>
+    <g font-family="'Courier New', Courier, monospace" font-size="12" letter-spacing="2" fill="#ebe1c8" fill-opacity=".55" text-anchor="middle">
+      <text x="60" y="226">VERDICT</text>
+      <text x="250" y="226">MIDNIGHT</text>
+      <text x="470" y="226">ABOVE THE COURTS</text>
+      <text x="690" y="226">SECOND SON</text>
+      <text x="880" y="226">THE QUESTION</text>
+      <text x="1040" y="226">ELECTION NIGHT</text>
+    </g>
+
+    <!-- censorship band -->
+    <rect x="250" y="0" width="790" height="200" fill="#d2402f" fill-opacity=".06"/>
+    <path d="M250 0 V200" stroke="#d2402f" stroke-dasharray="4 5"/>
+    <text x="262" y="20" font-family="'Courier New', Courier, monospace" font-size="12" letter-spacing="2" fill="#d2402f">PRESS CENSORED</text>
+
+    <!-- reported (what you see) -->
+    <path d="M60 92 L250 100 L470 86 L690 72 L880 60 L1040 52" fill="none" stroke="#e2a444" stroke-width="3.5" stroke-linejoin="round"/>
+    <g fill="#e2a444"><circle cx="470" cy="86" r="5"/><circle cx="690" cy="72" r="5"/><circle cx="880" cy="60" r="5"/></g>
+    <text x="1030" y="36" text-anchor="end" font-family="Georgia, 'Times New Roman', serif" font-size="19" font-style="italic" fill="#e2a444">“as reported”: always improving</text>
+
+    <!-- true (hidden) -->
+    <path d="M60 92 L250 116 L470 132 L690 168 L880 178 L1040 184" fill="none" stroke="#ebe1c8" stroke-opacity=".5" stroke-width="3" stroke-dasharray="7 7" stroke-linejoin="round"/>
+    <text x="276" y="160" font-family="Georgia, 'Times New Roman', serif" font-size="19" font-style="italic" fill="#ebe1c8" fill-opacity=".6">the true figure, hidden from you</text>
+
+    <!-- reveal -->
+    <path d="M1040 52 V184" stroke="#d2402f" stroke-width="3"/>
+    <circle cx="1040" cy="184" r="8" fill="#d2402f"/>
+    <text x="1030" y="120" text-anchor="end" font-family="'Courier New', Courier, monospace" font-size="13" letter-spacing="2" fill="#d2402f">THE COUNT</text>
+  </g>
+</svg>

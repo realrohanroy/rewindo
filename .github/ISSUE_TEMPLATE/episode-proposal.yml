@@ -1,0 +1,53 @@
+name: Episode proposal
+description: Pitch a historical moment for a new episode.
+title: "[Episode] "
+labels: ["episode", "proposal"]
+body:
+  - type: input
+    id: moment
+    attributes:
+      label: The moment
+      placeholder: "e.g. Shastri, the Tashkent talks, January 1966"
+    validations:
+      required: true
+  - type: input
+    id: you
+    attributes:
+      label: Who does the player play?
+    validations:
+      required: true
+  - type: textarea
+    id: decisions
+    attributes:
+      label: The decisions
+      description: Three to six real choices they faced. What were the alternatives people argued for at the time?
+    validations:
+      required: true
+  - type: textarea
+    id: advisors
+    attributes:
+      label: The advisors
+      description: Who disagreed with whom, and is it on the record?
+  - type: textarea
+    id: pressure
+    attributes:
+      label: The pressure
+      description: What is the clock, or the meter that makes each choice cost something?
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: Books, papers or archives a writer could check facts against.
+    validations:
+      required: true
+  - type: textarea
+    id: sensitivity
+    attributes:
+      label: Sensitivities
+      description: Living people, communal violence, ongoing disputes. How should the episode handle them?
+  - type: checkboxes
+    id: write
+    attributes:
+      label: Would you like to write it?
+      options:
+        - label: Yes, I'd like to write the script

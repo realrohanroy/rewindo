@@ -23,7 +23,7 @@ function useArt(src: string) {
 }
 
 function Portrait({ id }: { id: string }) {
-  const art = useArt(`/art/portraits/${id}.jpg`);
+  const art = useArt(`${import.meta.env.BASE_URL}art/portraits/${id}.jpg`);
   if (!art) return null;
   return (
     <div className="portrait" aria-hidden="true">
