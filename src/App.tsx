@@ -310,6 +310,20 @@ function Decide({ g, setG }: { g: Game; setG: (g: Game) => void }) {
     window.setTimeout(() => setG(choose(g, opt)), 950);
   };
 
+  // A snap decision: when the fuse burns down, the fallback is taken for you.
+  const latest = useRef(pick);
+  latest.current = pick;
+  const timer = s.timer;
+  useEffect(() => {
+    if (!timer) return;
+    const t = window.setTimeout(() => {
+      const fallback = options.find((o) => o.id === timer.fallback);
+      if (fallback) latest.current(fallback);
+    }, timer.seconds * 1000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.id]);
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
@@ -324,6 +338,7 @@ function Decide({ g, setG }: { g: Game; setG: (g: Game) => void }) {
     <div className={`decide ${stamped ? 'stamping' : ''}`}>
       <div className="file-head">{g.ep.decideHead}</div>
       <h3>{s.prompt}</h3>
+      {timer && !stamped && <div className="fuse" style={{ animationDuration: `${timer.seconds}s` }} />}
 
       {g.freeReply && (
         <div className="reply">
@@ -349,13 +364,14 @@ function Decide({ g, setG }: { g: Game; setG: (g: Game) => void }) {
               >
                 <span className="letter">{o.id}</span>
                 <span className="text">{o.label}</span>
-                {stamped === o.id && <span className="stamp">Ordered</span>}
+                {stamped === o.id && <span className="stamp">{g.ep.stamp ?? 'Ordered'}</span>}
               </button>
             ))}
           </div>
 
           {!stamped &&
             !g.freeUsed &&
+            !timer &&
             options.length > 1 &&
             (open ? (
               <form className="free" onSubmit={submit}>

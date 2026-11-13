@@ -942,3 +942,18 @@ p {
     order: 2;
   }
 }
+
+/* ---------- a snap decision: the fuse burns down, then the choice is made for you ---------- */
+
+.fuse {
+  height: 4px;
+  margin: -8px 0 18px;
+  background: var(--red);
+  transform-origin: left;
+  animation: fuse linear both;
+}
+@keyframes fuse {
+  to {
+    transform: scaleX(0);
+  }
+}

@@ -1,26 +1,30 @@
 import * as THREE from 'three';
 import type { Env } from '../episodes/types';
+import { dressing, ground } from './cricket';
 
 export type Room = {
   group: THREE.Group;
   background: number;
   fog: number;
   tick: (t: number) => void;
+  /** People stand in the open instead of sitting at a table. */
+  standing?: boolean;
+  fogDensity?: number;
 };
 
-const TABLE_TOP = 0.76;
+export const TABLE_TOP = 0.76;
 
-const M = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) =>
+export const M = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) =>
   new THREE.MeshStandardMaterial({ color, roughness: 0.85, ...extra });
-const glow = (color: number) => new THREE.MeshBasicMaterial({ color });
+export const glow = (color: number) => new THREE.MeshBasicMaterial({ color });
 
-function box(g: THREE.Object3D, w: number, h: number, d: number, m: THREE.Material, x: number, y: number, z: number) {
+export function box(g: THREE.Object3D, w: number, h: number, d: number, m: THREE.Material, x: number, y: number, z: number) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
   mesh.position.set(x, y, z);
   g.add(mesh);
   return mesh;
 }
-function cyl(g: THREE.Object3D, rt: number, rb: number, h: number, m: THREE.Material, x: number, y: number, z: number) {
+export function cyl(g: THREE.Object3D, rt: number, rb: number, h: number, m: THREE.Material, x: number, y: number, z: number) {
   const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, 20), m);
   mesh.position.set(x, y, z);
   g.add(mesh);
@@ -28,7 +32,7 @@ function cyl(g: THREE.Object3D, rt: number, rb: number, h: number, m: THREE.Mate
 }
 
 /** Deterministic random, so a room looks the same every time it is built. */
-function rng(seed: number) {
+export function rng(seed: number) {
   let a = seed;
   return () => {
     a = (a + 0x6d2b79f5) | 0;
@@ -40,7 +44,7 @@ function rng(seed: number) {
 
 type Shell = { w: number; h: number; back: number; wall: number; floor: number; ceil: number };
 
-function shell(g: THREE.Object3D, s: Shell) {
+export function shell(g: THREE.Object3D, s: Shell) {
   const depth = 3.2 - s.back;
   const zc = (3.2 + s.back) / 2;
   box(g, s.w, 0.1, depth, M(s.floor, { roughness: 0.7 }), 0, -0.05, zc);
@@ -51,7 +55,7 @@ function shell(g: THREE.Object3D, s: Shell) {
   box(g, 0.1, s.h, depth, wall, s.w / 2 + 0.05, s.h / 2, zc);
 }
 
-function table(g: THREE.Object3D, top: number, side: number, inlay?: number) {
+export function table(g: THREE.Object3D, top: number, side: number, inlay?: number) {
   box(g, 3.3, 0.05, 1.2, M(top, { roughness: 0.5 }), 0, TABLE_TOP - 0.025, 0);
   box(g, 3.1, TABLE_TOP - 0.05, 0.05, M(side), 0, (TABLE_TOP - 0.05) / 2, -0.5);
   box(g, 0.05, TABLE_TOP - 0.05, 1.05, M(side), -1.55, (TABLE_TOP - 0.05) / 2, 0);
@@ -80,7 +84,7 @@ function deskItems(g: THREE.Object3D) {
   cyl(g, 0.036, 0.036, 0.002, M(0x5a3518, { roughness: 0.2 }), 0.52, TABLE_TOP + 0.062, 0.22);
 }
 
-function light(g: THREE.Object3D, l: THREE.Light, x: number, y: number, z: number) {
+export function light(g: THREE.Object3D, l: THREE.Light, x: number, y: number, z: number) {
   l.position.set(x, y, z);
   g.add(l);
   return l;
@@ -378,6 +382,6 @@ function hall(): Room {
   };
 }
 
-const BUILDERS: Record<Env, () => Room> = { study, vault, office, night, hall };
+const BUILDERS: Record<Env, () => Room> = { study, vault, office, night, hall, dressing, ground };
 
 export const buildRoom = (env: Env): Room => BUILDERS[env]();

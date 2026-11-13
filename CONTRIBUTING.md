@@ -69,6 +69,7 @@ src/
     types.ts                 The Episode contract. Read this first.
     e1991.ts                 Episode 01 as game data
     e1975.ts                 Episode 02 as game data
+    e1983.ts                 Episode 03 as game data
     index.ts                 The list of episodes shown on the title screen
   engine.ts                  Rules: entering scenes, applying choices, endings, free-text matching
   App.tsx                    Screens: title, briefing, scene, decision, ending, record
@@ -77,7 +78,8 @@ src/
   world/
     World.tsx                Mounts the 3D view behind the interface
     stage.ts                 Camera, lighting, who is speaking, transitions
-    rooms.ts                 The five rooms: study, vault, office, night, hall
+    rooms.ts                 The indoor rooms: study, vault, office, night, hall
+    cricket.ts               Lord's: the dressing room and the ground
     people.ts                The characters
 public/
   art/portraits/             Optional portrait photos, shown beside dialogue
@@ -158,7 +160,7 @@ A scene:
   title: 'The Telegram',
   date: '3 June 1984',
   place: 'New Delhi',
-  env: 'study',                        // study | vault | office | night | hall
+  env: 'study',                        // study | vault | office | night | hall | dressing | ground
   skip: (f) => f.someFlag !== 'x',     // optional: only show on some paths
   beats: (f, m) => [{ text: 'Narration.' }, { who: 'You', text: 'A line.' }],
   advisors: () => [{ id: 'advisor-id', name: 'Name', role: 'Role', text: 'Advice.' }],

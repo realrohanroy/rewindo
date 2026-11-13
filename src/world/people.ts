@@ -14,6 +14,10 @@ type Look = {
   beard?: number;
   turban?: number;
   cap?: boolean;
+  /** A brimmed sun hat, as worn in the field. */
+  hat?: number;
+  /** Wicketkeeping gloves. */
+  gloves?: number;
   torso: number;
   sleeves: number;
   shirt?: number;
@@ -21,6 +25,7 @@ type Look = {
 };
 
 const WHITE_KHADI = 0xe9e4d6;
+const WHITES = 0xf2efe6;
 
 const LOOKS: Record<string, Look> = {
   // Dr Manmohan Singh: sky-blue turban, white beard, glasses, kurta under a dark jacket.
@@ -123,6 +128,29 @@ const LOOKS: Record<string, Look> = {
     torso: 0x2c2823,
     sleeves: 0x2c2823,
   },
+  // --- 1983: India's cricketers, in whites ---
+  // Sunil Gavaskar: compact, curly dark hair under a white sun hat.
+  gavaskar: { skin: 0xb98863, build: 0.95, hair: { style: 'full', color: 0x1b1816 }, hat: 0xf4f1e8, torso: WHITES, sleeves: WHITES },
+  // Mohinder Amarnath: tall, thick dark hair, sleeveless cream sweater.
+  amarnath: { skin: 0xc49672, build: 1.05, hair: { style: 'full', color: 0x1b1816 }, torso: 0xe6dcc0, sleeves: WHITES },
+  // Madan Lal: wiry, dark hair, dark moustache.
+  madanlal: { skin: 0xb07d58, build: 0.98, hair: { style: 'full', color: 0x1b1816 }, moustache: 0x1b1816, torso: WHITES, sleeves: WHITES },
+  // Syed Kirmani: shaven head, wicketkeeping gloves.
+  kirmani: { skin: 0xa77750, build: 1.02, gloves: 0xb5542e, torso: WHITES, sleeves: WHITES },
+  // Sandeep Patil: big, dark hair, moustache, batting.
+  patil: { skin: 0xb98863, build: 1.12, hair: { style: 'full', color: 0x1b1816 }, moustache: 0x1b1816, torso: WHITES, sleeves: WHITES },
+  // P.R. Man Singh, team manager: navy blazer, tie, glasses.
+  mansingh: {
+    skin: 0xb48a69,
+    build: 1.08,
+    hair: { style: 'full', color: 0x2a2623 },
+    glasses: 0x1d1a17,
+    moustache: 0x2a2623,
+    torso: 0x1f2a44,
+    sleeves: 0x1f2a44,
+    shirt: 0xe8e6e0,
+    tie: 0x7a1f1f,
+  },
   // The party Finance Minister (fictional): black hair, moustache, heavy glasses, brown jacket.
   'fm-politician': {
     skin: 0x99694a,
@@ -162,16 +190,17 @@ function limb(parent: THREE.Object3D, a: THREE.Vector3, b: THREE.Vector3, r: num
   parent.add(mesh);
 }
 
-export function buildPerson(id: string, x: number, z: number, faceTo: THREE.Vector3): Person {
+export function buildPerson(id: string, x: number, z: number, faceTo: THREE.Vector3, standing = false): Person {
   const L = LOOKS[id] ?? LOOKS.veteran;
   const group = new THREE.Group();
   group.position.set(x, 0, z);
   group.rotation.y = Math.atan2(faceTo.x - x, faceTo.z - z);
 
-  // High-backed chair.
-  add(group, new THREE.BoxGeometry(0.56, 0.86, 0.06), mat(0x2a1a12, 0.6), 0, 0.98, -0.25);
+  // Seated figures get a high-backed chair. Standing ones are the same figure raised onto legs.
+  if (!standing) add(group, new THREE.BoxGeometry(0.56, 0.86, 0.06), mat(0x2a1a12, 0.6), 0, 0.98, -0.25);
 
   const body = new THREE.Group();
+  body.position.y = standing ? 0.42 : 0;
   group.add(body);
   const cloth = mat(L.torso, 0.9);
   const sleeve = mat(L.sleeves, 0.9);
@@ -190,11 +219,14 @@ export function buildPerson(id: string, x: number, z: number, faceTo: THREE.Vect
 
   for (const s of [-1, 1]) {
     const shoulder = new THREE.Vector3(s * 0.2 * L.build, 1.05, 0);
-    const elbow = new THREE.Vector3(s * 0.27 * L.build, 0.84, 0.14);
-    const hand = new THREE.Vector3(s * 0.1, 0.8, 0.44);
+    // Seated: forearms rest on the table. Standing: arms hang, hands loosely in front.
+    const elbow = standing ? new THREE.Vector3(s * 0.26 * L.build, 0.82, 0.03) : new THREE.Vector3(s * 0.27 * L.build, 0.84, 0.14);
+    const hand = standing ? new THREE.Vector3(s * 0.2, 0.6, 0.14) : new THREE.Vector3(s * 0.1, 0.8, 0.44);
     limb(body, shoulder, elbow, 0.052 * L.build, sleeve);
     limb(body, elbow, hand, 0.044 * L.build, sleeve);
-    add(body, new THREE.SphereGeometry(0.038, 12, 10), skin, hand.x, hand.y, hand.z + 0.02);
+    if (L.gloves !== undefined) add(body, new THREE.SphereGeometry(0.062, 12, 10), mat(L.gloves, 0.7), hand.x, hand.y - 0.02, hand.z + 0.02).scale.set(1, 1.25, 0.7);
+    else add(body, new THREE.SphereGeometry(0.038, 12, 10), skin, hand.x, hand.y, hand.z + 0.02);
+    if (standing) limb(body, new THREE.Vector3(s * 0.09, 0.55, 0), new THREE.Vector3(s * 0.1, -0.36, 0), 0.07 * L.build, mat(WHITES, 0.9));
   }
 
   // Head. Local +z is the face.
@@ -217,7 +249,7 @@ export function buildPerson(id: string, x: number, z: number, faceTo: THREE.Vect
   if (L.hair?.style === 'full') {
     const hair = add(
       head,
-      new THREE.SphereGeometry(0.108, 28, 14, 0, Math.PI * 2, 0, Math.PI * 0.6),
+      new THREE.SphereGeometry(0.108, 28, 14, 0, Math.PI * 2, 0, Math.PI * 0.55),
       mat(L.hair.color, 0.95),
     );
     hair.scale.copy(HS);
@@ -265,6 +297,11 @@ export function buildPerson(id: string, x: number, z: number, faceTo: THREE.Vect
       wrap.rotation.set(Math.PI / 2 - 0.2, s * 0.34, 0);
       wrap.scale.set(1, 1.08, 1);
     }
+  }
+  if (L.hat !== undefined) {
+    const felt = mat(L.hat, 0.95);
+    add(head, new THREE.CylinderGeometry(0.088, 0.1, 0.07, 22), felt, 0, 0.1, 0);
+    add(head, new THREE.CylinderGeometry(0.14, 0.14, 0.012, 26), felt, 0, 0.07, 0.01).rotation.x = 0.08;
   }
   if (L.cap) {
     const cap = add(head, new THREE.CylinderGeometry(0.076, 0.094, 0.075, 22), mat(0xf1eee6, 0.95), 0, 0.106, -0.004);

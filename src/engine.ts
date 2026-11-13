@@ -43,8 +43,12 @@ export const readings = (ep: Episode, m: Meters, f: Flags): Reading[] => [ep.her
 
 function diff(before: Reading[], after: Reading[]): Delta[] {
   return after
-    .map((a) => ({ label: a.label, unit: a.unit, by: a.value - (before.find((b) => b.key === a.key)?.value ?? a.value) }))
-    .filter((d) => d.by !== 0 && Math.abs(d.by) < 50);
+    .map((a) => ({
+      label: a.delta?.label ?? a.label,
+      unit: a.unit,
+      by: (a.value - (before.find((b) => b.key === a.key)?.value ?? a.value)) / (a.delta?.per ?? 1),
+    }))
+    .filter((d) => d.by !== 0 && Math.abs(d.by) < 400);
 }
 
 /** Move to the next playable scene at or after `from`, applying the passage of time. */

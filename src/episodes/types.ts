@@ -5,7 +5,7 @@ export type Flags = Record<string, string | boolean | undefined>;
 /** Changes to apply to meters. Any meter left out is unchanged. */
 export type Fx = Record<string, number | undefined>;
 
-export type Env = 'study' | 'vault' | 'office' | 'night' | 'hall';
+export type Env = 'study' | 'vault' | 'office' | 'night' | 'hall' | 'dressing' | 'ground';
 export type Beat = { who?: string; text: string };
 export type Advisor = { id: string; name: string; role: string; text: string };
 
@@ -34,13 +34,23 @@ export type Scene = {
   /** At most three are seated in the room. An empty list skips the counsel step. */
   advisors: (f: Flags, m: Meters) => Advisor[];
   prompt: string;
+  /** A snap decision: if the seconds run out, the fallback option is taken for the player. */
+  timer?: { seconds: number; fallback: string };
   options: (f: Flags, m: Meters) => Option[];
 };
 
 export type MeterDef = { key: string; start: number; max?: number };
 
 /** One meter as the player sees it, which is not always its true value. */
-export type Reading = { key: string; label: string; value: number; unit?: string; low?: boolean };
+export type Reading = {
+  key: string;
+  label: string;
+  value: number;
+  unit?: string;
+  low?: boolean;
+  /** How a change is reported, when the bar is scaled or its label carries a number: "Wickets +2". */
+  delta?: { label: string; per: number };
+};
 
 export type Ending = { title: string; env: Env; text: (f: Flags, m: Meters) => string[] };
 
@@ -68,6 +78,8 @@ export type Episode = {
   duration: string;
   shareLine: string;
   decideHead: string;
+  /** The word stamped on a chosen option. Defaults to "Ordered". */
+  stamp?: string;
   /** Names used in narration lines that belong to a seated advisor. */
   speakers: Record<string, string>;
 

@@ -10,6 +10,7 @@ body:
       options:
         - "01 · 1991 · Two Weeks of Dollars"
         - "02 · 1975 · The Midnight Proclamation"
+        - "03 · 1983 · One Hundred and Eighty-Three"
         - "Title screen or not episode-specific"
   - type: textarea
     id: what

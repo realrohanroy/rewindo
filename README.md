@@ -14,7 +14,7 @@
 
 <p align="center">
   <img alt="Licence: MIT" src="https://img.shields.io/badge/licence-MIT-e2a444?style=flat-square&labelColor=0b0c0a">
-  <img alt="Episodes: 2" src="https://img.shields.io/badge/episodes-2-e2a444?style=flat-square&labelColor=0b0c0a">
+  <img alt="Episodes: 3" src="https://img.shields.io/badge/episodes-3-e2a444?style=flat-square&labelColor=0b0c0a">
   <img alt="Built with Three.js" src="https://img.shields.io/badge/built_with-three.js-ebe1c8?style=flat-square&labelColor=0b0c0a">
   <img alt="No install" src="https://img.shields.io/badge/install-none-ebe1c8?style=flat-square&labelColor=0b0c0a">
   <img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-7fb58a?style=flat-square&labelColor=0b0c0a">
@@ -24,7 +24,7 @@
 
 **It is 20 June 1991. India has fourteen days of foreign exchange left. You took the oath this morning.**
 
-Rewindo puts you in the chair of the people who made India's hardest decisions. You sit across the table from their real advisors and hear them argue. You know only what they knew on the day. Then you sign the order and live with the result.
+Rewindo puts you in the chair of the people who made India's hardest decisions, in politics and in sport. You face their real advisors and hear them argue. You know only what they knew on the day. Then you sign the order and live with the result.
 
 Each episode takes 15 to 20 minutes and runs in your browser. Nothing to install. At the end you see what really happened, decision by decision, and how your choices compare.
 
@@ -55,6 +55,16 @@ Each episode takes 15 to 20 minutes and runs in your browser. Nothing to install
   </tr>
 </table>
 
+<p align="center">
+  <img src="docs/screenshots/e3-lords.jpg" alt="The middle at Lord's, the pavilion behind. Kirmani, Gavaskar in a white sun hat, and Madan Lal stand around you as you choose who takes the new ball." width="100%">
+</p>
+
+### 03 · 1983 · One Hundred and Eighty-Three
+
+You are **Kapil Dev**, twenty-four, captain of India in the World Cup final at Lord's. Your team has made 183, and everyone in the ground knows it is not enough. Who gets the new ball? Does Madan Lal get one more over at Viv Richards? And when the ball goes up behind you, there are four seconds to call for it.
+
+<sub>7 decisions, one of them timed · 4 endings · about 15 minutes</sub>
+
 Every episode is built from a script in [`episodes/`](episodes/). Read the scripts to see every branch, or play and find out.
 
 ---
@@ -76,6 +86,7 @@ You see the room in first person. Whoever is speaking leans in and the light fin
 Every episode has its own pressures, shown at the top of the screen.
 
 - **In 1991** the big number is **days of import cover**. It falls every scene. At zero, India defaults. Under a week, the screen edge pulses red and a heartbeat joins the soundtrack.
+- **In 1983** the big number is **runs in hand**: your total minus theirs. You watch it shrink over by over.
 - **In 1975** the big number is **Liberty**: courts, press and opposition, the Constitution as you found it. You always see what you are spending.
 
 ### The mirror
@@ -186,11 +197,13 @@ Characters are built from simple shapes and recognised by what people remember: 
 
 - [x] Episode 01: 1991, the balance-of-payments crisis
 - [x] Episode 02: 1975, the Emergency
+- [x] Episode 03: 1983, the World Cup final (the first sport episode)
 - [x] First-person 3D rooms and characters
 - [ ] An AI model behind "Do something else", kept within each episode's facts
 - [ ] "X% of players chose this" on every decision
 - [ ] Hindi, then more Indian languages
 - [ ] Sculpted heads for closer likeness
+- [ ] Business and science episodes
 - [ ] Episodes on 1922, 1947–48, 1965 and 1971
 - [ ] Historian review of every published episode
 

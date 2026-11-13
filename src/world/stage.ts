@@ -19,7 +19,7 @@ const VIEW: Record<Focus, { pos: THREE.Vector3; look: THREE.Vector3 }> = {
 export class Stage {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
-  private camera = new THREE.PerspectiveCamera(50, 1, 0.05, 60);
+  private camera = new THREE.PerspectiveCamera(50, 1, 0.05, 400);
   private clock = new THREE.Clock();
   private content = new THREE.Group();
   private room: Room | null = null;
@@ -58,10 +58,10 @@ export class Stage {
     this.room = buildRoom(env);
     this.content.add(this.room.group);
     this.scene.background = new THREE.Color(this.room.background);
-    this.scene.fog = new THREE.FogExp2(this.room.fog, 0.07);
+    this.scene.fog = new THREE.FogExp2(this.room.fog, this.room.fogDensity ?? 0.07);
 
     const seats = SEATS[Math.min(cast.length, 3)];
-    this.people = cast.slice(0, 3).map((id, i) => buildPerson(id, seats[i], SEAT_Z, EYE));
+    this.people = cast.slice(0, 3).map((id, i) => buildPerson(id, seats[i], SEAT_Z, EYE, this.room!.standing));
     this.people.forEach((p) => this.content.add(p.group));
     this.fade = 0;
   }
@@ -119,13 +119,17 @@ export class Stage {
       p.body.rotation.x += ((mine ? 0.07 : 0) - p.body.rotation.x) * ease;
     }
 
-    if (speaking) this.spot.target.position.set(speaking.x, 1.2, SEAT_Z);
+    // Standing in the open, everyone (you included) is about 40cm taller than at a table.
+    const lift = this.room?.standing ? 0.42 : 0;
+    if (speaking) this.spot.target.position.set(speaking.x, 1.2 + lift, SEAT_Z);
     this.spot.intensity += ((speaking ? 26 : 0) - this.spot.intensity) * ease;
 
     const view = VIEW[this.focus];
     const target = view.look.clone();
+    target.y += lift;
     if (speaking && this.focus === 'room') target.x = speaking.x * 0.55;
     const pos = view.pos.clone();
+    pos.y += lift;
     if (!this.still) {
       pos.x += Math.sin(t * 0.31) * 0.012;
       pos.y += Math.sin(t * 0.83) * 0.006;
