@@ -37,6 +37,7 @@ export class Stage {
   /** Title-screen montage: which shot is playing and for how long. -1 when the montage is off. */
   private shot = -1;
   private shotTime = 0;
+  private reelPaused = false;
 
   constructor(private canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -80,6 +81,11 @@ export class Stage {
     this.cut(0);
   }
 
+  /** Hold the montage on its current frame, or let it run again. */
+  pauseReel(paused: boolean) {
+    this.reelPaused = paused;
+  }
+
   stopReel() {
     if (this.shot < 0) return;
     this.shot = -1;
@@ -99,7 +105,7 @@ export class Stage {
   /** Advance the montage. Returns the brightness for this frame: each shot fades in and out around its cut. */
   private reel(dt: number): number {
     const s = REEL[this.shot];
-    this.shotTime += dt;
+    if (!this.reelPaused) this.shotTime += dt;
     if (this.shotTime >= s.seconds) {
       this.cut(this.shot + 1);
       return 0;
@@ -148,6 +154,12 @@ export class Stage {
     const ease = 1 - Math.exp(-dt * 2.2);
 
     const reelLight = this.shot >= 0 ? this.reel(dt) : null;
+    if (reelLight !== null && this.reelPaused) {
+      // Stopped: hold everything still, people and lights included.
+      this.renderer.toneMappingExposure = Math.max(reelLight, 0.85);
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
     this.room?.tick(t);
     this.fade = Math.min(1, this.fade + dt / 1.4);
     this.renderer.toneMappingExposure = reelLight ?? this.fade * this.fade;

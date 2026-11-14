@@ -974,3 +974,12 @@ p {
 .episode {
   background: rgba(8, 10, 9, 0.82);
 }
+
+.motion-toggle {
+  position: fixed;
+  right: clamp(14px, 3vw, 32px);
+  bottom: clamp(14px, 3vh, 28px);
+  z-index: 3;
+  font-family: var(--type);
+  background: rgba(0, 0, 0, 0.55);
+}

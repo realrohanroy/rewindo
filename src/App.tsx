@@ -494,6 +494,23 @@ export default function App() {
   const [muted, setMuted] = useState(false);
   const [speaker, setSpeaker] = useState<string | null>(null);
   const [exiting, setExiting] = useState(false);
+  // Whether the title-screen montage is stopped. Remembered between visits.
+  const [frozen, setFrozen] = useState(() => {
+    try {
+      return localStorage.getItem('rewindo.motion') === 'off';
+    } catch {
+      return false;
+    }
+  });
+  const toggleFrozen = () =>
+    setFrozen((was) => {
+      try {
+        localStorage.setItem('rewindo.motion', was ? 'on' : 'off');
+      } catch {
+        /* private window: the choice just lasts for this visit */
+      }
+      return !was;
+    });
   const { ep } = g;
   const playing = g.phase !== 'title' && g.phase !== 'history';
 
@@ -556,7 +573,12 @@ export default function App() {
 
   return (
     <div className={`stage phase-${g.phase} ${pressure >= 0.5 && inScene ? 'tense' : ''}`}>
-      <World env={env} cast={cast} speaker={talking} focus={focus} dim={!inScene || g.phase === 'card'} reel={g.phase === 'title'} />
+      <World env={env} cast={cast} speaker={talking} focus={focus} dim={!inScene || g.phase === 'card'} reel={g.phase === 'title'} paused={frozen} />
+      {g.phase === 'title' && (
+        <button className="mute motion-toggle" onClick={toggleFrozen} aria-pressed={frozen}>
+          {frozen ? '▶ Play animation' : '❚❚ Stop animation'}
+        </button>
+      )}
       {showHud && <Hud g={g} muted={muted} onMute={() => setMuted(sound.toggle())} onExit={askExit} />}
       {g.phase === 'briefing' && (
         <button className="mute exit corner-exit" onClick={askExit} title="Leave this episode (Esc)">

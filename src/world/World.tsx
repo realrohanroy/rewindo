@@ -2,10 +2,10 @@ import { useEffect, useRef } from 'react';
 import type { Env } from '../episodes/types';
 import { Stage, type Focus } from './stage';
 
-type Props = { env: Env; cast: string[]; speaker: string | null; focus: Focus; dim: boolean; reel: boolean };
+type Props = { env: Env; cast: string[]; speaker: string | null; focus: Focus; dim: boolean; reel: boolean; paused: boolean };
 
 /** The 3D room behind the interface. If WebGL is unavailable the game still plays on a dark backdrop. */
-export function World({ env, cast, speaker, focus, dim, reel }: Props) {
+export function World({ env, cast, speaker, focus, dim, reel, paused }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const stage = useRef<Stage | null>(null);
   const castKey = cast.join(',');
@@ -30,6 +30,7 @@ export function World({ env, cast, speaker, focus, dim, reel }: Props) {
     s.stopReel();
     s.set(env, castKey ? castKey.split(',') : []);
   }, [reel, env, castKey]);
+  useEffect(() => stage.current?.pauseReel(paused), [paused]);
   useEffect(() => {
     if (!reel) stage.current?.setSpeaker(speaker);
   }, [speaker, reel]);
